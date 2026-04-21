@@ -25,7 +25,8 @@ export default function Insumos() {
   const openEdit = (record: InsumoResponse) => { setEditing(record); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setEditing(null); };
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
       const payload = { ...values };
@@ -147,7 +148,7 @@ export default function Insumos() {
                 saldo_atual: editing.saldo_atual,
                 lote: editing.lote,
                 validade: editing.validade ? dayjs(editing.validade) : undefined,
-              } as unknown as Record<string, unknown>
+              } as any // eslint-disable-line @typescript-eslint/no-explicit-any
             : undefined
         }
       >

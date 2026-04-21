@@ -55,7 +55,8 @@ export default function Ocorrencias() {
 
   const refresh = () => setRefreshKey((k) => k + 1);
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
       const payload: OcorrenciaCreate = {

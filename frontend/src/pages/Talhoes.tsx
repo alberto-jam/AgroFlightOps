@@ -35,7 +35,8 @@ export default function Talhoes() {
   const openEdit = (record: TalhaoResponse) => { setEditing(record); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setEditing(null); };
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
       const payload = { ...values };
@@ -158,7 +159,7 @@ export default function Talhoes() {
                 area_hectares: editing.area_hectares,
                 cultura_id: editing.cultura_id,
                 geojson: editing.geojson ? JSON.stringify(editing.geojson, null, 2) : undefined,
-              } as unknown as Record<string, unknown>
+              } as any // eslint-disable-line @typescript-eslint/no-explicit-any
             : undefined
         }
       >

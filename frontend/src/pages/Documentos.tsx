@@ -46,7 +46,8 @@ export default function Documentos() {
   const openCreate = () => { setSelectedFile(null); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setSelectedFile(null); };
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleSubmit = async (values: any) => {
     if (!selectedFile) {
       message.warning('Selecione um arquivo para upload.');
       return;

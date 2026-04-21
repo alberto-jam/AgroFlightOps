@@ -175,7 +175,8 @@ export default function Missoes() {
   const openCreate = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
       const payload: MissaoCreate = {
@@ -254,7 +255,8 @@ export default function Missoes() {
     }
   };
 
-  const handleAddBateria = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleAddBateria = async (values: any) => {
     if (!batMissao) return;
     setBatAdding(true);
     try {
@@ -288,7 +290,8 @@ export default function Missoes() {
     }
   };
 
-  const handleAddReserva = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleAddReserva = async (values: any) => {
     if (!resMissao) return;
     setResAdding(true);
     try {
@@ -363,7 +366,8 @@ export default function Missoes() {
     }
   };
 
-  const handleAddConsumo = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleAddConsumo = async (values: any) => {
     if (!execMissao) return;
     setConsumoAdding(true);
     try {

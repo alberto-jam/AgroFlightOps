@@ -43,7 +43,8 @@ export default function Manutencoes() {
   const openEdit = (record: ManutencaoResponse) => { setEditing(record); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setEditing(null); };
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
       const payload: Record<string, unknown> = {
@@ -160,7 +161,7 @@ export default function Manutencoes() {
                 data_manutencao: dayjs(editing.data_manutencao),
                 proxima_manutencao: editing.proxima_manutencao ? dayjs(editing.proxima_manutencao) : null,
                 horas_na_data: editing.horas_na_data,
-              } as unknown as Record<string, unknown>
+              } as any // eslint-disable-line @typescript-eslint/no-explicit-any
             : undefined
         }
       >

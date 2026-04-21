@@ -154,7 +154,8 @@ export default function OrdensServico() {
   };
   const closeModal = () => { setModalOpen(false); setEditing(null); };
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
       const payload = {
