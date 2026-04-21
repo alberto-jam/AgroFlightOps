@@ -53,8 +53,9 @@ export default function Baterias() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao salvar bateria.');
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      message.error(detail || 'Erro ao salvar bateria.');
     } finally {
       setSaving(false);
     }
@@ -65,8 +66,9 @@ export default function Baterias() {
       await apiClient.patch(`/baterias/${record.id}`, { ativo: !record.ativo });
       message.success(record.ativo ? 'Bateria desativada.' : 'Bateria ativada.');
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao alterar status.');
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      message.error(detail || 'Erro ao alterar status.');
     }
   };
 
