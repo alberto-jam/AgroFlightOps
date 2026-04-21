@@ -16,10 +16,13 @@ from app.core.exceptions import (
     InvalidStateTransitionError,
 )
 
+_root_path = f"/{settings.APP_ENV}" if settings.APP_ENV else ""
+
 app = FastAPI(
     title="AgroFlightOps API",
     description="API para gestão de operações de pulverização agrícola com drones",
     version="1.0.0",
+    root_path=_root_path,
 )
 
 # Parse CORS origins from settings — supports comma-separated list or "*"
