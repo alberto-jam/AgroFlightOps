@@ -30,7 +30,7 @@ export default function Manutencoes() {
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
-    apiClient.get<{ items: DroneResponse[] }>('/drones', { params: { page_size: 200 } })
+    apiClient.get<{ items: DroneResponse[] }>('/drones', { params: { page_size: 100 } })
       .then(({ data }) =>
         setDrones(data.items.map((d) => ({ value: d.id, label: d.identificacao }))),
       );

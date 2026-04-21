@@ -26,7 +26,7 @@ export default function Evidencias() {
   const [missoes, setMissoes] = useState<DropdownOption[]>([]);
 
   useEffect(() => {
-    apiClient.get<{ items: MissaoResponse[] }>('/missoes', { params: { page_size: 200 } })
+    apiClient.get<{ items: MissaoResponse[] }>('/missoes', { params: { page_size: 100 } })
       .then(({ data }) =>
         setMissoes(data.items.map((m) => ({ value: m.id, label: m.codigo }))),
       );

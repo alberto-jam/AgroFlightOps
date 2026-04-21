@@ -144,25 +144,25 @@ export default function Missoes() {
   // Load dropdown data
   useEffect(() => {
     apiClient.get<{ items: OrdemServicoResponse[] }>('/ordens-servico', {
-      params: { page_size: 200, status: 'APROVADA' },
+      params: { page_size: 100, status: 'APROVADA' },
     }).then(({ data }) =>
       setOrdensServico(data.items.map((o) => ({ value: o.id, label: o.codigo }))),
     );
-    apiClient.get<{ items: UsuarioResponse[] }>('/usuarios', { params: { page_size: 200 } })
+    apiClient.get<{ items: UsuarioResponse[] }>('/usuarios', { params: { page_size: 100 } })
       .then(({ data }) => {
         const all = data.items.map((u) => ({ value: u.id, label: u.nome }));
         setPilotos(all);
         setTecnicos(all);
       });
-    apiClient.get<{ items: DroneResponse[] }>('/drones', { params: { page_size: 200 } })
+    apiClient.get<{ items: DroneResponse[] }>('/drones', { params: { page_size: 100 } })
       .then(({ data }) =>
         setDrones(data.items.map((d) => ({ value: d.id, label: d.identificacao }))),
       );
-    apiClient.get<{ items: BateriaResponse[] }>('/baterias', { params: { page_size: 200 } })
+    apiClient.get<{ items: BateriaResponse[] }>('/baterias', { params: { page_size: 100 } })
       .then(({ data }) =>
         setBaterias(data.items.map((b) => ({ value: b.id, label: b.identificacao }))),
       );
-    apiClient.get<{ items: InsumoResponse[] }>('/insumos', { params: { page_size: 200 } })
+    apiClient.get<{ items: InsumoResponse[] }>('/insumos', { params: { page_size: 100 } })
       .then(({ data }) =>
         setInsumos(data.items.map((i) => ({ value: i.id, label: `${i.nome} (${i.unidade_medida})` }))),
       );

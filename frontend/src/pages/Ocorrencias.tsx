@@ -38,11 +38,11 @@ export default function Ocorrencias() {
   const [tiposOcorrencia, setTiposOcorrencia] = useState<DropdownOption[]>([]);
 
   useEffect(() => {
-    apiClient.get<{ items: MissaoResponse[] }>('/missoes', { params: { page_size: 200 } })
+    apiClient.get<{ items: MissaoResponse[] }>('/missoes', { params: { page_size: 100 } })
       .then(({ data }) =>
         setMissoes(data.items.map((m) => ({ value: m.id, label: m.codigo }))),
       );
-    apiClient.get<{ items: TipoOcorrenciaResponse[] }>('/tipos-ocorrencia', { params: { page_size: 200 } })
+    apiClient.get<{ items: TipoOcorrenciaResponse[] }>('/tipos-ocorrencia', { params: { page_size: 100 } })
       .then(({ data }) =>
         setTiposOcorrencia(data.items.map((t) => ({ value: t.id, label: t.nome }))),
       ).catch(() => {

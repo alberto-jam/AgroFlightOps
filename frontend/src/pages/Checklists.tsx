@@ -44,7 +44,7 @@ export default function Checklists() {
   // Load missions that are in EM_CHECKLIST or nearby states
   useEffect(() => {
     apiClient
-      .get<{ items: MissaoResponse[] }>('/missoes', { params: { page_size: 500 } })
+      .get<{ items: MissaoResponse[] }>('/missoes', { params: { page_size: 100 } })
       .then(({ data }) => {
         const relevant = data.items.filter((m) =>
           ['EM_CHECKLIST', 'LIBERADA'].includes(m.status),

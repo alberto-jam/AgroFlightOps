@@ -37,7 +37,7 @@ export default function Auditoria() {
   const [detail, setDetail] = useState<AuditoriaResponse | null>(null);
 
   useEffect(() => {
-    apiClient.get<{ items: UsuarioResponse[] }>('/usuarios', { params: { page_size: 200 } })
+    apiClient.get<{ items: UsuarioResponse[] }>('/usuarios', { params: { page_size: 100 } })
       .then(({ data }) =>
         setUsuarios(data.items.map((u) => ({ value: u.id, label: u.nome }))),
       )

@@ -104,13 +104,13 @@ export default function OrdensServico() {
 
   // Load dropdown data
   useEffect(() => {
-    apiClient.get<{ items: ClienteResponse[] }>('/clientes', { params: { page_size: 200 } })
+    apiClient.get<{ items: ClienteResponse[] }>('/clientes', { params: { page_size: 100 } })
       .then(({ data }) => setClientes(data.items.map((c) => ({ value: c.id, label: c.nome }))));
-    apiClient.get<{ items: PropriedadeResponse[] }>('/propriedades', { params: { page_size: 200 } })
+    apiClient.get<{ items: PropriedadeResponse[] }>('/propriedades', { params: { page_size: 100 } })
       .then(({ data }) => setPropriedades(data.items.map((p) => ({ value: p.id, label: p.nome }))));
-    apiClient.get<{ items: TalhaoResponse[] }>('/talhoes', { params: { page_size: 500 } })
+    apiClient.get<{ items: TalhaoResponse[] }>('/talhoes', { params: { page_size: 100 } })
       .then(({ data }) => setTalhoes(data.items.map((t) => ({ value: t.id, label: t.nome }))));
-    apiClient.get<{ items: CulturaResponse[] }>('/culturas', { params: { page_size: 200 } })
+    apiClient.get<{ items: CulturaResponse[] }>('/culturas', { params: { page_size: 100 } })
       .then(({ data }) => setCulturas(data.items.map((c) => ({ value: c.id, label: c.nome }))));
   }, []);
 
@@ -118,7 +118,7 @@ export default function OrdensServico() {
   useEffect(() => {
     if (!formClienteId) { setFormPropriedades([]); setFormTalhoes([]); return; }
     apiClient.get<{ items: PropriedadeResponse[] }>('/propriedades', {
-      params: { page_size: 200, cliente_id: formClienteId },
+      params: { page_size: 100, cliente_id: formClienteId },
     }).then(({ data }) =>
       setFormPropriedades(data.items.map((p) => ({ value: p.id, label: p.nome }))),
     );
@@ -130,7 +130,7 @@ export default function OrdensServico() {
   useEffect(() => {
     if (!formPropriedadeId) { setFormTalhoes([]); return; }
     apiClient.get<{ items: TalhaoResponse[] }>('/talhoes', {
-      params: { page_size: 500, propriedade_id: formPropriedadeId },
+      params: { page_size: 100, propriedade_id: formPropriedadeId },
     }).then(({ data }) =>
       setFormTalhoes(data.items.map((t) => ({ value: t.id, label: t.nome }))),
     );

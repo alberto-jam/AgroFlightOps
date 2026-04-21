@@ -44,13 +44,13 @@ export default function Dashboard() {
     try {
       const [osRes, missoesRes, dronesRes, docsRes] = await Promise.all([
         apiClient.get<{ items: OrdemServicoResponse[]; total: number }>(
-          '/ordens-servico', { params: { page_size: 200 } },
+          '/ordens-servico', { params: { page_size: 100 } },
         ),
         apiClient.get<{ items: MissaoResponse[]; total: number }>(
-          '/missoes', { params: { page_size: 200 } },
+          '/missoes', { params: { page_size: 100 } },
         ),
         apiClient.get<{ items: DroneResponse[]; total: number }>(
-          '/drones', { params: { page_size: 200 } },
+          '/drones', { params: { page_size: 100 } },
         ),
         apiClient.get<{ items: DocumentoOficialResponse[]; total: number }>(
           '/documentos-oficiais', { params: { page_size: 100, status: 'VENCIDO' } },
