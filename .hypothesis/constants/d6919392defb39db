@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\api\clientes.py
+# hypothesis_version: 6.151.9
+
+[100, 201, '/clientes', '/{cliente_id}', 'ADMINISTRADOR', 'Clientes']

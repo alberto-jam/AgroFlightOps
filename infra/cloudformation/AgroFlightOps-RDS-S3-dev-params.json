@@ -1,0 +1,17 @@
+[
+  { "ParameterKey": "Client", "ParameterValue": "Vista Agrotech" },
+  { "ParameterKey": "Project", "ParameterValue": "AgroFlightOps" },
+  { "ParameterKey": "Environment", "ParameterValue": "dev" },
+  { "ParameterKey": "Author", "ParameterValue": "Alberto Moreira" },
+  { "ParameterKey": "DBName", "ParameterValue": "agroflightops" },
+  { "ParameterKey": "DBInstanceClass", "ParameterValue": "db.t4g.micro" },
+  { "ParameterKey": "AllocatedStorage", "ParameterValue": "20" },
+  { "ParameterKey": "BackupRetentionPeriod", "ParameterValue": "7" },
+  { "ParameterKey": "MultiAZ", "ParameterValue": "false" },
+  { "ParameterKey": "DeletionProtection", "ParameterValue": "false" },
+  { "ParameterKey": "VpcId", "ParameterValue": "vpc-0c2c43e8246e8aac4" },
+  { "ParameterKey": "PrivateSubnetIds", "ParameterValue": "subnet-0897fc6fc27707376,subnet-012ae4b190f633777" },
+  { "ParameterKey": "AppSecurityGroupId", "ParameterValue": "sg-085e65bc42b600baf" },
+  { "ParameterKey": "AllowedCidrForPostgres", "ParameterValue": "10.0.0.0/16" },
+  { "ParameterKey": "DocumentsBucketName", "ParameterValue": "vistaagrotech-dev-documents" }
+]

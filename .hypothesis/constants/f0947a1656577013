@@ -1,0 +1,4 @@
+# file: C:\Users\AlbertoMoreira\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\sqlalchemy\dialects\mysql\types.py
+# hypothesis_version: 6.151.9
+
+['BIGINT', 'BIT', 'CHAR', 'DATETIME', 'DECIMAL', 'DOUBLE', 'FLOAT', 'INTEGER', 'LONGBLOB', 'LONGTEXT', 'MEDIUMBLOB', 'MEDIUMINT', 'MEDIUMTEXT', 'NCHAR', 'NUMERIC', 'NVARCHAR', 'REAL', 'SMALLINT', 'TEXT', 'TIME', 'TIMESTAMP', 'TINYBLOB', 'TINYINT', 'TINYTEXT', 'VARCHAR', 'YEAR', 'collate', 'collation', 'national']

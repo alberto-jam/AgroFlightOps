@@ -1,0 +1,4 @@
+# file: C:\Users\AlbertoMoreira\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\sqlalchemy\dialects\mysql\aiomysql.py
+# hypothesis_version: 6.151.9
+
+['BINARY', 'Binary', 'DATETIME', 'DataError', 'DatabaseError', 'Error', 'IntegrityError', 'InterfaceError', 'InternalError', 'NUMBER', 'NotSupportedError', 'OperationalError', 'ProgrammingError', 'STRING', 'TIMESTAMP', 'Warning', 'aiomysql', 'async_creator_fn', 'async_fallback', 'db', 'format', 'not connected', 'pymysql', 'user']

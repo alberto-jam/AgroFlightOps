@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\api\auditoria.py
+# hypothesis_version: 6.151.9
+
+[100, '/auditoria', 'ADMINISTRADOR', 'Auditoria', 'items', 'page', 'page_size', 'pages', 'total']

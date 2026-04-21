@@ -1,0 +1,4 @@
+# file: C:\Users\AlbertoMoreira\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\sqlalchemy\dialects\mysql\mysqlconnector.py
+# hypothesis_version: 6.151.9
+
+[2006, 2013, 2014, 2045, 2048, 2055, ' % ', 'AUTOCOMMIT', 'DBAPIModule', 'READ COMMITTED', 'READ UNCOMMITTED', 'REPEATABLE READ', 'SERIALIZABLE', '__version__', 'allow_local_infile', 'autocommit', 'buffered', 'client_flag', 'client_flags', 'compress', 'connect_timeout', 'connection_timeout', 'consume_results', 'force_ipv6', 'format', 'get_warnings', 'mysql.connector', 'mysqlconnector', 'pool_reset_session', 'pool_size', 'raise_on_warnings', 'raw', 'ssl_verify_cert', 'use_pure', 'use_unicode', 'user']

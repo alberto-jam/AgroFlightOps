@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\services\insumo_service.py
+# hypothesis_version: 6.151.9
+
+['ATUALIZACAO', 'CRIACAO', 'EXCLUSAO', 'INSUMO', 'fabricante', 'lote', 'nome', 'saldo_atual', 'unidade_medida', 'validade']

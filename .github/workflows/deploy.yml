@@ -1,0 +1,300 @@
+# =============================================================================
+# AgroFlightOps — CI/CD Deploy Pipeline
+# =============================================================================
+# Workflow de build, teste e deploy multi-ambiente usando AWS SAM.
+#
+# Triggers:
+#   - push main       → deploy em dev (automático)
+#   - push release/*  → deploy em hml (automático)
+#   - tag  v*.*.*     → deploy em prd (aprovação manual via GitHub Environment)
+#
+# ---------------------------------------------------------------------------
+# GitHub Secrets (obrigatórios) — Settings > Secrets and variables > Actions
+# ---------------------------------------------------------------------------
+#   AWS_ROLE_ARN
+#     Descrição : ARN da IAM Role assumida via OIDC federation
+#     Formato   : arn:aws:iam::<ACCOUNT_ID>:role/<ROLE_NAME>
+#     Exemplo   : arn:aws:iam::123456789012:role/GitHubActions-AgroFlightOps-Deploy
+#
+#   DATABASE_URL_DEV | DATABASE_URL_HML | DATABASE_URL_PRD
+#     Descrição : Connection string MySQL (SQLAlchemy async) por ambiente
+#     Formato   : mysql+aiomysql://<USER>:<PASSWORD>@<HOST>:<PORT>/<DATABASE>
+#     Exemplo   : mysql+aiomysql://admin:S3cur3P@ss@agroflightops-dev.xxxx.us-east-1.rds.amazonaws.com:3306/agroflightops_dev
+#
+#   JWT_SECRET_DEV | JWT_SECRET_HML | JWT_SECRET_PRD
+#     Descrição : Chave secreta para assinatura de tokens JWT por ambiente
+#     Formato   : String alfanumérica de pelo menos 32 caracteres
+#     Exemplo   : a1b2c3d4e5f6...  (gerado com `openssl rand -hex 32`)
+#
+# ---------------------------------------------------------------------------
+# GitHub Variables (obrigatórias) — Settings > Secrets and variables > Actions > Variables
+# ---------------------------------------------------------------------------
+# Variáveis não-sensíveis usadas como parameter overrides no sam deploy e
+# no build do frontend. Devem ser criadas para cada ambiente ({ENV} = DEV, HML, PRD).
+#
+#   VPC_SUBNET_IDS_{ENV}
+#     Descrição : IDs das subnets privadas onde a Lambda será executada (VPC)
+#     Formato   : Lista separada por vírgula, sem espaços
+#     Exemplo   : subnet-0a1b2c3d4e5f60001,subnet-0a1b2c3d4e5f60002
+#
+#   VPC_SG_IDS_{ENV}
+#     Descrição : IDs dos Security Groups aplicados à Lambda (acesso ao RDS)
+#     Formato   : Lista separada por vírgula, sem espaços
+#     Exemplo   : sg-0a1b2c3d4e5f60001
+#
+#   S3_DOCS_BUCKET_{ENV}
+#     Descrição : Nome do bucket S3 de documentos existente (stack infra)
+#     Formato   : Nome válido de bucket S3 (lowercase, sem espaços)
+#     Exemplo   : agroflightops-dev-documents-123456789012
+#
+#   CORS_ORIGINS_{ENV}
+#     Descrição : Origens permitidas para CORS (URLs do frontend)
+#     Formato   : URLs separadas por vírgula, sem espaços
+#     Exemplo   : https://d1234abcdef.cloudfront.net,http://localhost:5173
+#
+#   API_URL_{ENV}
+#     Descrição : URL base da API Gateway para o build do frontend (VITE_API_URL)
+#     Formato   : URL HTTPS completa sem barra final
+#     Exemplo   : https://abc123def4.execute-api.us-east-1.amazonaws.com/dev
+#
+# ---------------------------------------------------------------------------
+# Pré-requisitos AWS — OIDC Federation (configuração única por conta)
+# ---------------------------------------------------------------------------
+# O workflow utiliza OIDC (OpenID Connect) para autenticar com a AWS sem
+# access keys estáticas. Dois recursos devem ser criados previamente:
+#
+# 1. IAM Identity Provider (OIDC)
+#    - Provider URL  : https://token.actions.githubusercontent.com
+#    - Audience      : sts.amazonaws.com
+#    - Criação via Console: IAM > Identity providers > Add provider > OpenID Connect
+#    - Criação via CLI:
+#        aws iam create-open-id-connect-provider \
+#          --url https://token.actions.githubusercontent.com \
+#          --client-id-list sts.amazonaws.com \
+#          --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
+#
+# 2. IAM Role com Trust Policy para o repositório GitHub
+#    - A Role deve ter permissões para: CloudFormation, S3, Lambda, API Gateway,
+#      CloudFront, IAM (PassRole), CloudWatch Logs, EC2 (VPC/ENI)
+#    - Trust Policy (exemplo — ajustar org/repo):
+#        {
+#          "Version": "2012-10-17",
+#          "Statement": [{
+#            "Effect": "Allow",
+#            "Principal": {
+#              "Federated": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com"
+#            },
+#            "Action": "sts:AssumeRoleWithWebIdentity",
+#            "Condition": {
+#              "StringEquals": {
+#                "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+#              },
+#              "StringLike": {
+#                "token.actions.githubusercontent.com:sub": "repo:<GITHUB_ORG>/<REPO_NAME>:*"
+#              }
+#            }
+#          }]
+#        }
+#    - Substituir <ACCOUNT_ID>, <GITHUB_ORG> e <REPO_NAME> pelos valores reais
+#    - Para restringir a branches específicas, usar:
+#        "repo:<ORG>/<REPO>:ref:refs/heads/main" (somente main)
+#        "repo:<ORG>/<REPO>:ref:refs/tags/v*"     (somente tags v*)
+#
+# 3. GitHub Environment "production"
+#    - Criar em Settings > Environments > New environment > "production"
+#    - Configurar "Required reviewers" com pelo menos 1 aprovador
+#    - O deploy em prd (tag v*.*.*) aguardará aprovação manual
+# =============================================================================
+
+name: AgroFlightOps Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*'
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  id-token: write   # Necessário para OIDC federation com AWS
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    # -------------------------------------------------------------------------
+    # Determinação do ambiente com base na ref do Git
+    # -------------------------------------------------------------------------
+    env:
+      ENV: >-
+        ${{
+          startsWith(github.ref, 'refs/tags/v') && 'prd' ||
+          startsWith(github.ref, 'refs/heads/release/') && 'hml' ||
+          'dev'
+        }}
+      CONFIG_ENV: >-
+        ${{
+          startsWith(github.ref, 'refs/tags/v') && 'prd' ||
+          startsWith(github.ref, 'refs/heads/release/') && 'hml' ||
+          'dev'
+        }}
+
+    # -------------------------------------------------------------------------
+    # Environment condicional: 'production' para prd (aprovação manual),
+    # caso contrário usa o nome do ambiente (dev/hml)
+    # -------------------------------------------------------------------------
+    environment: >-
+      ${{
+        startsWith(github.ref, 'refs/tags/v') && 'production' ||
+        (startsWith(github.ref, 'refs/heads/release/') && 'hml' || 'dev')
+      }}
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Setup e Testes (Task 5.2)
+      # -----------------------------------------------------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend/
+
+      - name: Run backend tests
+        run: pytest
+
+      - name: Run frontend lint
+        run: npm run lint
+        working-directory: frontend/
+
+      # -----------------------------------------------------------------------
+      # Build — Backend e Frontend (Task 5.3)
+      # -----------------------------------------------------------------------
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Setup AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Build backend (SAM)
+        run: sam build --use-container
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend/
+        env:
+          VITE_API_URL: ${{ vars[format('API_URL_{0}', env.ENV)] || format('https://api-{0}.agroflightops.com', env.ENV) }}
+
+      # -----------------------------------------------------------------------
+      # Migração Flyway (Task 5.4)
+      # -----------------------------------------------------------------------
+      - name: Parse database credentials for Flyway
+        id: db-creds
+        run: |
+          DB_URL="${{ secrets[format('DATABASE_URL_{0}', env.ENV)] }}"
+          # Extract components from mysql+aiomysql://user:pass@host:port/db
+          DB_USER=$(echo "$DB_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p')
+          DB_PASS=$(echo "$DB_URL" | sed -n 's|.*://[^:]*:\([^@]*\)@.*|\1|p')
+          DB_HOST=$(echo "$DB_URL" | sed -n 's|.*@\([^:]*\):.*|\1|p')
+          DB_PORT=$(echo "$DB_URL" | sed -n 's|.*@[^:]*:\([0-9]*\)/.*|\1|p')
+          DB_NAME=$(echo "$DB_URL" | sed -n 's|.*/\([^?]*\).*|\1|p')
+          echo "::add-mask::$DB_PASS"
+          echo "JDBC_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}" >> $GITHUB_OUTPUT
+          echo "DB_USER=${DB_USER}" >> $GITHUB_OUTPUT
+          echo "DB_PASS=${DB_PASS}" >> $GITHUB_OUTPUT
+
+      - name: Run Flyway migrations
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/database:/flyway/sql \
+            flyway/flyway:latest \
+            -url="${{ steps.db-creds.outputs.JDBC_URL }}" \
+            -user="${{ steps.db-creds.outputs.DB_USER }}" \
+            -password="${{ steps.db-creds.outputs.DB_PASS }}" \
+            migrate
+
+      # -----------------------------------------------------------------------
+      # Deploy Backend e Frontend (Task 5.5)
+      # -----------------------------------------------------------------------
+      - name: Deploy backend (SAM)
+        id: sam-deploy
+        run: |
+          sam deploy \
+            --config-env ${{ env.CONFIG_ENV }} \
+            --no-fail-on-empty-changeset \
+            --parameter-overrides \
+              "DatabaseUrl=${{ secrets[format('DATABASE_URL_{0}', env.ENV)] }}" \
+              "JwtSecret=${{ secrets[format('JWT_SECRET_{0}', env.ENV)] }}" \
+              "VpcSubnetIds=${{ vars[format('VPC_SUBNET_IDS_{0}', env.ENV)] }}" \
+              "VpcSecurityGroupIds=${{ vars[format('VPC_SG_IDS_{0}', env.ENV)] }}" \
+              "S3DocumentsBucket=${{ vars[format('S3_DOCS_BUCKET_{0}', env.ENV)] }}" \
+              "CorsOrigins=${{ vars[format('CORS_ORIGINS_{0}', env.ENV)] }}"
+
+      - name: Get stack outputs
+        id: stack-outputs
+        run: |
+          STACK_NAME="agroflightops-${{ env.ENV }}"
+          API_URL=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text)
+          BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='FrontendBucketName'].OutputValue" --output text)
+          CF_DIST_ID=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
+          echo "API_URL=${API_URL}" >> $GITHUB_OUTPUT
+          echo "BUCKET_NAME=${BUCKET_NAME}" >> $GITHUB_OUTPUT
+          echo "CF_DIST_ID=${CF_DIST_ID}" >> $GITHUB_OUTPUT
+          echo "### 🚀 API URL: ${API_URL}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Deploy frontend to S3
+        run: aws s3 sync frontend/dist/ s3://${{ steps.stack-outputs.outputs.BUCKET_NAME }} --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.stack-outputs.outputs.CF_DIST_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' --output text)
+          echo "Waiting for invalidation ${INVALIDATION_ID}..."
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ steps.stack-outputs.outputs.CF_DIST_ID }} \
+            --id ${INVALIDATION_ID}
+          echo "CloudFront invalidation completed."
+
+      # -----------------------------------------------------------------------
+      # Health Check (Task 5.6)
+      # -----------------------------------------------------------------------
+      - name: Health check
+        run: |
+          API_URL="${{ steps.stack-outputs.outputs.API_URL }}"
+          MAX_RETRIES=3
+          RETRY_DELAY=10
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Health check attempt ${i}/${MAX_RETRIES}..."
+            HTTP_CODE=$(curl -s -o /tmp/health_response.json -w "%{http_code}" "${API_URL}/health" || true)
+            if [ "$HTTP_CODE" = "200" ]; then
+              BODY=$(cat /tmp/health_response.json)
+              echo "✅ Health check passed: HTTP ${HTTP_CODE} — ${BODY}"
+              exit 0
+            fi
+            echo "⚠️ Health check returned HTTP ${HTTP_CODE}, retrying in ${RETRY_DELAY}s..."
+            sleep $RETRY_DELAY
+            RETRY_DELAY=$((RETRY_DELAY * 2))
+          done
+          echo "❌ Health check failed after ${MAX_RETRIES} attempts"
+          cat /tmp/health_response.json 2>/dev/null || true
+          exit 1

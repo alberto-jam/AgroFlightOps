@@ -1,0 +1,4 @@
+# file: C:\Users\AlbertoMoreira\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\sqlalchemy\dialects\mysql\mariadbconnector.py
+# hypothesis_version: 6.151.9
+
+['(\\d+)(?:[-\\.]?|$)', '.', '.constants.CLIENT', 'AUTOCOMMIT', 'READ COMMITTED', 'READ UNCOMMITTED', 'REPEATABLE READ', 'SERIALIZABLE', 'XA BEGIN :xid', 'XA COMMIT :xid', 'XA END :xid', 'XA PREPARE :xid', 'XA ROLLBACK :xid', '__version__', 'ascii', 'client_flag', 'compress', 'connect_timeout', 'decode', "isn't valid", 'local_infile', 'mariadb', 'mariadbconnector', 'not connected', 'pool_size', 'port', 'qmark', 'read_timeout', 'ssl', 'ssl_verify_cert', 'utf8mb4', 'write_timeout', 'xid']

@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\main.py
+# hypothesis_version: 6.151.9
+
+[404, 409, 422, '*', ',', '.', '/health', '1.0.0', 'AgroFlightOps API', 'DELETE', 'GET', 'Health', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'Valor inválido', 'body', 'detail', 'errors', 'field', 'loc', 'message', 'msg', 'off', 'ok', 'status', 'unknown']

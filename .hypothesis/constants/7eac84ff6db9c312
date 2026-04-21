@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\api\checklists.py
+# hypothesis_version: 6.151.9
+
+['/aprovar', '/concluir', '/itens/{item_id}', 'ADMINISTRADOR', 'Checklists', 'PILOTO', 'TECNICO']

@@ -1,0 +1,4 @@
+# file: C:\Users\AlbertoMoreira\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\aiomysql\cursors.py
+# hypothesis_version: 6.151.9
+
+[b',', 1024000, '%r', '(', ')', ',', '.', '@_%s_%d', 'CALL %s', 'Cursor closed', 'SET @_%s_%d=%s', 'absolute', 'execute() first', 'out of range', 'relative', 'surrogateescape']

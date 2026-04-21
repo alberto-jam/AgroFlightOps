@@ -1,0 +1,332 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AgroFlightOps — Backend Serverless (Lambda + API Gateway) e Frontend (S3 + CloudFront).
+  Pipeline de deploy multi-ambiente (dev, hml, prd) com AWS SAM.
+
+# =============================================================================
+# Parameters
+# =============================================================================
+Parameters:
+  Environment:
+    Type: String
+    Description: Ambiente de deploy (dev, hml, prd)
+    AllowedValues:
+      - dev
+      - hml
+      - prd
+    Default: dev
+
+  VpcSubnetIds:
+    Type: CommaDelimitedList
+    Description: IDs das subnets privadas para a Lambda (ex. subnet-xxx,subnet-yyy)
+
+  VpcSecurityGroupIds:
+    Type: CommaDelimitedList
+    Description: IDs dos Security Groups para a Lambda (ex. sg-xxx)
+
+  DatabaseUrl:
+    Type: String
+    NoEcho: true
+    Description: Connection string do banco MySQL (ex. mysql+aiomysql://user:pass@host:3306/db)
+
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    Description: Chave secreta para assinatura de tokens JWT
+
+  JwtAlgorithm:
+    Type: String
+    Description: Algoritmo utilizado para assinatura JWT
+    Default: HS256
+
+  JwtExpirationMinutes:
+    Type: String
+    Description: Tempo de expiração do token JWT em minutos
+    Default: '60'
+
+  S3DocumentsBucket:
+    Type: String
+    Description: Nome do bucket S3 de documentos existente
+
+  S3Region:
+    Type: String
+    Description: Região AWS do bucket S3
+    Default: us-east-1
+
+  CorsOrigins:
+    Type: String
+    Description: Origens permitidas para CORS (separadas por vírgula)
+
+  AppEnv:
+    Type: String
+    Description: Valor da variável de ambiente APP_ENV
+    Default: dev
+
+  Debug:
+    Type: String
+    Description: Flag de debug (true/false)
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'false'
+
+  Autor:
+    Type: String
+    Description: Nome do autor para TAG de recursos
+    Default: Alberto Moreira
+
+# =============================================================================
+# Globals
+# =============================================================================
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: python3.12
+    Tags:
+      Cliente: VistaAgrotech
+      Projeto: AgroFlightOps
+      Ambiente: !Ref Environment
+      Autor: !Ref Autor
+
+# =============================================================================
+# Resources (definidos nas próximas tarefas)
+# =============================================================================
+Resources:
+  # ---------------------------------------------------------------------------
+  # Lambda Function — Backend FastAPI via Mangum
+  # ---------------------------------------------------------------------------
+  AgroFlightOpsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.main.handler
+      CodeUri: .
+      Role: !GetAtt LambdaExecutionRole.Arn
+      VpcConfig:
+        SubnetIds: !Ref VpcSubnetIds
+        SecurityGroupIds: !Ref VpcSecurityGroupIds
+      Environment:
+        Variables:
+          DATABASE_URL: !Ref DatabaseUrl
+          JWT_SECRET: !Ref JwtSecret
+          JWT_ALGORITHM: !Ref JwtAlgorithm
+          JWT_EXPIRATION_MINUTES: !Ref JwtExpirationMinutes
+          S3_BUCKET: !Ref S3DocumentsBucket
+          S3_REGION: !Ref S3Region
+          CORS_ORIGINS: !Ref CorsOrigins
+          APP_ENV: !Ref AppEnv
+          DEBUG: !Ref Debug
+      Events:
+        CatchAll:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AgroFlightOpsApi
+            Path: /{proxy+}
+            Method: ANY
+    Metadata:
+      BuildMethod: python3.12
+
+  # ---------------------------------------------------------------------------
+  # API Gateway HTTP — Proxy para Lambda
+  # ---------------------------------------------------------------------------
+  AgroFlightOpsApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Environment
+      CorsConfiguration:
+        AllowOrigins: !Split [",", !Ref CorsOrigins]
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - "*"
+
+  # ---------------------------------------------------------------------------
+  # IAM Role — Lambda Execution Role (menor privilégio)
+  # ---------------------------------------------------------------------------
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "AgroFlightOps-${Environment}-LambdaExecutionRole"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        # Política CloudWatch Logs
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-CloudWatchLogs"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+        # Política S3 Documentos
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-S3Documentos"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub "arn:aws:s3:::${S3DocumentsBucket}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${S3DocumentsBucket}"
+        # Política VPC (ENI management — Resource * requerido pela AWS)
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-VPCAccess"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:CreateNetworkInterface
+                  - ec2:DescribeNetworkInterfaces
+                  - ec2:DeleteNetworkInterface
+                Resource: "*"
+      Tags:
+        - Key: Cliente
+          Value: VistaAgrotech
+        - Key: Projeto
+          Value: AgroFlightOps
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Autor
+
+  # ---------------------------------------------------------------------------
+  # S3 Bucket — Frontend Static Hosting
+  # ---------------------------------------------------------------------------
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Cliente
+          Value: VistaAgrotech
+        - Key: Projeto
+          Value: AgroFlightOps
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Autor
+
+  # ---------------------------------------------------------------------------
+  # CloudFront Origin Access Control (OAC) — Acesso seguro ao S3
+  # ---------------------------------------------------------------------------
+  CloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "AgroFlightOps-${Environment}-OAC"
+        Description: !Sub "OAC para acesso ao Frontend Bucket - ${Environment}"
+        SigningProtocol: sigv4
+        SigningBehavior: always
+        OriginAccessControlOriginType: s3
+
+  # ---------------------------------------------------------------------------
+  # CloudFront Distribution — CDN para Frontend SPA
+  # ---------------------------------------------------------------------------
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          - Id: S3FrontendOrigin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt CloudFrontOAC.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        DefaultCacheBehavior:
+          TargetOriginId: S3FrontendOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          AllowedMethods:
+            - GET
+            - HEAD
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+      Tags:
+        - Key: Cliente
+          Value: VistaAgrotech
+        - Key: Projeto
+          Value: AgroFlightOps
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Autor
+
+  # ---------------------------------------------------------------------------
+  # S3 Bucket Policy — Acesso somente via CloudFront (OAC)
+  # ---------------------------------------------------------------------------
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${FrontendBucket}/*"
+            Condition:
+              StringEquals:
+                aws:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+
+# =============================================================================
+# Outputs
+# =============================================================================
+Outputs:
+  ApiUrl:
+    Description: URL do API Gateway
+    Value: !Sub "https://${AgroFlightOpsApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-ApiUrl"
+
+  FrontendBucketName:
+    Description: Nome do bucket S3 do frontend
+    Value: !Ref FrontendBucket
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-FrontendBucket"
+
+  CloudFrontDomainName:
+    Description: Domain name da distribuição CloudFront
+    Value: !GetAtt CloudFrontDistribution.DomainName
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-CloudFrontDomain"
+
+  CloudFrontDistributionId:
+    Description: ID da distribuição CloudFront
+    Value: !Ref CloudFrontDistribution
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-CloudFrontDistId"

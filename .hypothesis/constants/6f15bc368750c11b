@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\services\cultura_service.py
+# hypothesis_version: 6.151.9
+
+['ATUALIZACAO', 'CRIACAO', 'CULTURA', 'EXCLUSAO', 'descricao', 'nome']

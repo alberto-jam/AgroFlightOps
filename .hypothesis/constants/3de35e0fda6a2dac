@@ -1,0 +1,4 @@
+# file: C:\Users\AlbertoMoreira\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\sqlalchemy\dialects\mysql\mysqldb.py
+# hypothesis_version: 6.151.9
+
+['.constants.CLIENT', 'AUTOCOMMIT', 'MySQLdb', 'MySQLdb.cursors', 'READ COMMITTED', 'READ UNCOMMITTED', 'REPEATABLE READ', 'SERIALIZABLE', 'SET NAMES %s', '__version__', 'charset', 'client_flag', 'compress', 'connect_timeout', 'db', 'format', 'latin1', 'local_infile', 'mysqldb', 'passwd', 'read_timeout', 'ssl', 'ssl_ca', 'ssl_capath', 'ssl_cert', 'ssl_check_hostname', 'ssl_cipher', 'ssl_key', 'use_unicode', 'user', 'write_timeout']

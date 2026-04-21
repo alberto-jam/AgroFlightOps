@@ -1,0 +1,391 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Stack base de dados e armazenamento documental do AgroFlightOps.
+  Provisiona Amazon RDS for PostgreSQL, Secrets Manager, S3 bucket de documentos,
+  Security Group, DB Subnet Group e DB Parameter Group.
+
+Parameters:
+  Client:
+    Type: String
+    Default: Vista Agrotech
+    Description: Nome do cliente para composição de tags.
+
+  Project:
+    Type: String
+    Default: AgroFlightOps
+    Description: Nome do projeto/produto.
+
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - hml
+      - prd
+    Description: Ambiente de implantação.
+
+  Author:
+    Type: String
+    Default: Alberto Moreira
+    Description: Autor responsável pela stack.
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC onde o banco e o bucket serão utilizados.
+
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Lista de subnets privadas para o DB Subnet Group. Recomenda-se ao menos 2 AZs.
+
+  AppSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security Group da aplicação que precisará acessar o banco.
+
+  DBName:
+    Type: String
+    Default: agroflightops
+    AllowedPattern: '^[a-zA-Z][a-zA-Z0-9_]*$'
+    ConstraintDescription: O nome do banco deve começar com letra e conter apenas letras, números ou underscore.
+    Description: Nome lógico do banco PostgreSQL.
+
+  DBEngineVersion:
+    Type: String
+    Default: '16.3'
+    AllowedPattern: '^16(\.[0-9]+)?$'
+    ConstraintDescription: Esta stack está preparada para PostgreSQL 16.x.
+    Description: Versão do engine PostgreSQL 16.x.
+
+  DBInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+    AllowedValues:
+      - db.t4g.micro
+      - db.t4g.small
+      - db.t4g.medium
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.m6g.large
+      - db.m6g.xlarge
+      - db.m6i.large
+      - db.m6i.xlarge
+    Description: Classe da instância RDS.
+
+  AllocatedStorage:
+    Type: Number
+    Default: 20
+    MinValue: 20
+    MaxValue: 16384
+    Description: Storage inicial em GB.
+
+  MaxAllocatedStorage:
+    Type: Number
+    Default: 100
+    MinValue: 20
+    MaxValue: 65536
+    Description: Storage máximo para autoscaling em GB.
+
+  BackupRetentionPeriod:
+    Type: Number
+    Default: 7
+    MinValue: 0
+    MaxValue: 35
+    Description: Retenção de backup em dias.
+
+  PreferredBackupWindow:
+    Type: String
+    Default: '03:00-04:00'
+    Description: Janela preferencial de backup UTC.
+
+  PreferredMaintenanceWindow:
+    Type: String
+    Default: 'sun:04:00-sun:05:00'
+    Description: Janela preferencial de manutenção UTC.
+
+  MultiAZ:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Habilita Multi-AZ para o RDS.
+
+  DeletionProtection:
+    Type: String
+    Default: 'false'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Proteção contra deleção do banco.
+
+  EnablePerformanceInsights:
+    Type: String
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Habilita Performance Insights.
+
+  S3BucketName:
+    Type: String
+    Default: ''
+    Description: >
+      Opcional. Nome explícito do bucket de documentos. Se vazio, a stack gera um nome único.
+
+Conditions:
+  UseExplicitBucketName: !Not [!Equals [!Ref S3BucketName, '']]
+  IsMultiAZ: !Equals [!Ref MultiAZ, 'true']
+  IsDeletionProtectionEnabled: !Equals [!Ref DeletionProtection, 'true']
+  IsPerformanceInsightsEnabled: !Equals [!Ref EnablePerformanceInsights, 'true']
+
+Resources:
+  DBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${Project}-${Environment}-db-secret'
+      Description: !Sub 'Credenciais do banco PostgreSQL do ${Project} no ambiente ${Environment}'
+      GenerateSecretString:
+        SecretStringTemplate: '{"username":"postgres"}'
+        GenerateStringKey: password
+        ExcludeCharacters: '"@/\\'
+        PasswordLength: 24
+      Tags:
+        - Key: Cliente
+          Value: !Ref Client
+        - Key: Projeto
+          Value: !Ref Project
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Author
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${Project}-${Environment}-db-sg'
+      GroupDescription: !Sub 'Acesso PostgreSQL para ${Project} ${Environment}'
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref AppSecurityGroupId
+          Description: Acesso PostgreSQL da aplicação
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+          Description: Saída padrão
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${Environment}-db-sg'
+        - Key: Cliente
+          Value: !Ref Client
+        - Key: Projeto
+          Value: !Ref Project
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Author
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub 'Subnets privadas do banco ${Project} ${Environment}'
+      DBSubnetGroupName: !Sub '${Project}-${Environment}-dbsubnet'
+      SubnetIds: !Ref PrivateSubnetIds
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${Environment}-dbsubnet'
+        - Key: Cliente
+          Value: !Ref Client
+        - Key: Projeto
+          Value: !Ref Project
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Author
+
+  DBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: !Sub 'Parameter Group PostgreSQL para ${Project} ${Environment}'
+      Family: postgres16
+      Parameters:
+        client_encoding: UTF8
+        timezone: America/Sao_Paulo
+        log_connections: '1'
+        log_disconnections: '1'
+        log_min_duration_statement: '5000'
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${Environment}-pg'
+        - Key: Cliente
+          Value: !Ref Client
+        - Key: Projeto
+          Value: !Ref Project
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Author
+
+  DBDocumentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !If
+        - UseExplicitBucketName
+        - !Ref S3BucketName
+        - !Sub '${Project}-${Environment}-documents-${AWS::AccountId}-${AWS::Region}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: AbortIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${Environment}-documents'
+        - Key: Cliente
+          Value: !Ref Client
+        - Key: Projeto
+          Value: !Ref Project
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Author
+
+  DBDocumentsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DBDocumentsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !Sub '${DBDocumentsBucket.Arn}'
+              - !Sub '${DBDocumentsBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub '${Project}-${Environment}-db'
+      Engine: postgres
+      EngineVersion: !Ref DBEngineVersion
+      DBInstanceClass: !Ref DBInstanceClass
+      AllocatedStorage: !Ref AllocatedStorage
+      MaxAllocatedStorage: !Ref MaxAllocatedStorage
+      StorageType: gp3
+      StorageEncrypted: true
+      DBName: !Ref DBName
+      MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecret, ':SecretString:username}}']]
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecret, ':SecretString:password}}']]
+      BackupRetentionPeriod: !Ref BackupRetentionPeriod
+      PreferredBackupWindow: !Ref PreferredBackupWindow
+      PreferredMaintenanceWindow: !Ref PreferredMaintenanceWindow
+      AutoMinorVersionUpgrade: true
+      AllowMajorVersionUpgrade: false
+      DeletionProtection: !If [IsDeletionProtectionEnabled, true, false]
+      MultiAZ: !If [IsMultiAZ, true, false]
+      PubliclyAccessible: false
+      CopyTagsToSnapshot: true
+      EnablePerformanceInsights: !If [IsPerformanceInsightsEnabled, true, false]
+      PerformanceInsightsRetentionPeriod: !If [IsPerformanceInsightsEnabled, 7, !Ref 'AWS::NoValue']
+      MonitoringInterval: 0
+      EnableCloudwatchLogsExports:
+        - postgresql
+        - upgrade
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      DBParameterGroupName: !Ref DBParameterGroup
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${Environment}-db'
+        - Key: Cliente
+          Value: !Ref Client
+        - Key: Projeto
+          Value: !Ref Project
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Author
+
+Outputs:
+  DBInstanceIdentifier:
+    Description: Identificador da instância RDS.
+    Value: !Ref DBInstance
+    Export:
+      Name: !Sub '${Project}-${Environment}-db-identifier'
+
+  DBEndpointAddress:
+    Description: Endpoint do banco PostgreSQL.
+    Value: !GetAtt DBInstance.Endpoint.Address
+    Export:
+      Name: !Sub '${Project}-${Environment}-db-endpoint-address'
+
+  DBEndpointPort:
+    Description: Porta do banco PostgreSQL.
+    Value: !GetAtt DBInstance.Endpoint.Port
+    Export:
+      Name: !Sub '${Project}-${Environment}-db-endpoint-port'
+
+  DBNameOutput:
+    Description: Nome do banco criado.
+    Value: !Ref DBName
+    Export:
+      Name: !Sub '${Project}-${Environment}-db-name'
+
+  DBSecretArn:
+    Description: ARN do secret com usuário e senha do banco.
+    Value: !Ref DBSecret
+    Export:
+      Name: !Sub '${Project}-${Environment}-db-secret-arn'
+
+  DBSecurityGroupId:
+    Description: Security Group do banco.
+    Value: !Ref DBSecurityGroup
+    Export:
+      Name: !Sub '${Project}-${Environment}-db-sg-id'
+
+  DBSubnetGroupNameOutput:
+    Description: Nome do DB Subnet Group.
+    Value: !Ref DBSubnetGroup
+    Export:
+      Name: !Sub '${Project}-${Environment}-dbsubnet-name'
+
+  DBParameterGroupNameOutput:
+    Description: Nome do DB Parameter Group.
+    Value: !Ref DBParameterGroup
+    Export:
+      Name: !Sub '${Project}-${Environment}-pg-name'
+
+  DocumentsBucketName:
+    Description: Bucket S3 de documentos oficiais.
+    Value: !Ref DBDocumentsBucket
+    Export:
+      Name: !Sub '${Project}-${Environment}-documents-bucket-name'
+
+  DocumentsBucketArn:
+    Description: ARN do bucket S3 de documentos oficiais.
+    Value: !GetAtt DBDocumentsBucket.Arn
+    Export:
+      Name: !Sub '${Project}-${Environment}-documents-bucket-arn'

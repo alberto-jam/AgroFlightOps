@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\api\manutencoes.py
+# hypothesis_version: 6.151.9
+
+[100, 201, '/manutencoes', '/{manutencao_id}', 'ADMINISTRADOR', 'Manutenções', 'TECNICO']

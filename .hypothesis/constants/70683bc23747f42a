@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\services\bateria_service.py
+# hypothesis_version: 6.151.9
+
+['ATUALIZACAO', 'BATERIA', 'CRIACAO', 'EXCLUSAO', 'drone_id', 'identificacao', 'observacoes', 'status']

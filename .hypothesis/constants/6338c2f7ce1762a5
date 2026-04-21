@@ -1,0 +1,4 @@
+# file: C:\Users\AlbertoMoreira\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\sqlalchemy\connectors\pyodbc.py
+# hypothesis_version: 6.151.9
+
+['%s=%s', ',%d', '.', ';', 'AUTOCOMMIT', 'Authentication=%s', 'AutoTranslate=%s', 'DRIVER={%s}', 'Database=%s', 'PWD=%s', 'Server=%s%s', 'UID=%s', '[.\\-]', 'ansi', 'authentication', 'autocommit', 'database', 'driver', 'dsn', 'dsn=%s', 'host', 'named', 'odbc_autotranslate', 'odbc_connect', 'password', 'port', 'pyodbc', 'unicode_results', 'user', '{', '{%s}', '}', '}}']

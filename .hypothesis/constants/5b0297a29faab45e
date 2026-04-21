@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\services\ordem_servico_service.py
+# hypothesis_version: 6.151.9
+
+['ATUALIZACAO', 'CRIACAO', 'ORDEM_SERVICO', 'aprovado_por', 'data_prevista', 'descricao', 'motivo_cancelamento', 'motivo_rejeicao', 'prioridade', 'status', 'tipo_aplicacao']

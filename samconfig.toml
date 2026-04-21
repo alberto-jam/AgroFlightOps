@@ -1,0 +1,92 @@
+# =============================================================================
+# AgroFlightOps — SAM Configuration (Multi-Environment)
+# =============================================================================
+# Uso: sam deploy --config-env <dev|hml|prd>
+#
+# Valores sensíveis (DATABASE_URL, JWT_SECRET, VPC IDs, etc.) devem ser
+# injetados via parameter_overrides no CI/CD (GitHub Actions Secrets).
+# Os placeholders abaixo servem apenas como referência dos parâmetros esperados.
+# =============================================================================
+
+version = 0.1
+
+# -----------------------------------------------------------------------------
+# Build — Configuração padrão para todos os ambientes
+# -----------------------------------------------------------------------------
+[default.build.parameters]
+use_container = true
+
+# =============================================================================
+# DEV — Ambiente de Desenvolvimento
+# =============================================================================
+[dev.deploy.parameters]
+stack_name = "agroflightops-dev"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+s3_prefix = "agroflightops-dev-artifacts"
+parameter_overrides = [
+    "Environment=dev",
+    "AppEnv=dev",
+    "Debug=true",
+    "JwtAlgorithm=HS256",
+    "JwtExpirationMinutes=60",
+    "S3Region=us-east-1",
+    "Autor=Alberto Moreira",
+    "DatabaseUrl=PLACEHOLDER_INJECTED_VIA_CI",
+    "JwtSecret=PLACEHOLDER_INJECTED_VIA_CI",
+    "VpcSubnetIds=PLACEHOLDER_INJECTED_VIA_CI",
+    "VpcSecurityGroupIds=PLACEHOLDER_INJECTED_VIA_CI",
+    "S3DocumentsBucket=PLACEHOLDER_INJECTED_VIA_CI",
+    "CorsOrigins=PLACEHOLDER_INJECTED_VIA_CI"
+]
+
+# =============================================================================
+# HML — Ambiente de Homologação
+# =============================================================================
+[hml.deploy.parameters]
+stack_name = "agroflightops-hml"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+s3_prefix = "agroflightops-hml-artifacts"
+parameter_overrides = [
+    "Environment=hml",
+    "AppEnv=hml",
+    "Debug=false",
+    "JwtAlgorithm=HS256",
+    "JwtExpirationMinutes=60",
+    "S3Region=us-east-1",
+    "Autor=Alberto Moreira",
+    "DatabaseUrl=PLACEHOLDER_INJECTED_VIA_CI",
+    "JwtSecret=PLACEHOLDER_INJECTED_VIA_CI",
+    "VpcSubnetIds=PLACEHOLDER_INJECTED_VIA_CI",
+    "VpcSecurityGroupIds=PLACEHOLDER_INJECTED_VIA_CI",
+    "S3DocumentsBucket=PLACEHOLDER_INJECTED_VIA_CI",
+    "CorsOrigins=PLACEHOLDER_INJECTED_VIA_CI"
+]
+
+# =============================================================================
+# PRD — Ambiente de Produção
+# =============================================================================
+[prd.deploy.parameters]
+stack_name = "agroflightops-prd"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM"
+s3_prefix = "agroflightops-prd-artifacts"
+parameter_overrides = [
+    "Environment=prd",
+    "AppEnv=prd",
+    "Debug=false",
+    "JwtAlgorithm=HS256",
+    "JwtExpirationMinutes=60",
+    "S3Region=us-east-1",
+    "Autor=Alberto Moreira",
+    "DatabaseUrl=PLACEHOLDER_INJECTED_VIA_CI",
+    "JwtSecret=PLACEHOLDER_INJECTED_VIA_CI",
+    "VpcSubnetIds=PLACEHOLDER_INJECTED_VIA_CI",
+    "VpcSecurityGroupIds=PLACEHOLDER_INJECTED_VIA_CI",
+    "S3DocumentsBucket=PLACEHOLDER_INJECTED_VIA_CI",
+    "CorsOrigins=PLACEHOLDER_INJECTED_VIA_CI"
+]

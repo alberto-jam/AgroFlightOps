@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\api\auth.py
+# hypothesis_version: 6.151.9
+
+['/auth', '/login', '/refresh', 'Autenticação']

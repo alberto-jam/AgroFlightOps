@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\core\config.py
+# hypothesis_version: 6.151.9
+
+[3600, '*', '.env', 'HS256', 'dev', 'us-east-1', 'utf-8']

@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\core\security.py
+# hypothesis_version: 6.151.9
+
+['auto', 'bcrypt', 'email', 'exp', 'iat', 'perfil', 'sub']

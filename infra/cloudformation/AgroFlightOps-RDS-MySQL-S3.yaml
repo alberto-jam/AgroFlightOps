@@ -1,0 +1,65 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AgroFlightOps RDS MySQL + S3 Documents
+
+Parameters:
+  Client:
+    Type: String
+    Default: Vista Agrotech
+
+  Project:
+    Type: String
+    Default: AgroFlightOps
+
+  Environment:
+    Type: String
+    AllowedValues: [dev, hml, prd]
+
+  Author:
+    Type: String
+    Default: Alberto Moreira
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+
+Resources:
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: MySQL access
+      VpcId: !Ref VpcId
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnets for RDS
+      SubnetIds: !Ref PrivateSubnetIds
+
+  MySQLDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub "${Project}-${Environment}-db"
+      Engine: mysql
+      EngineVersion: "8.0"
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      MasterUsername: admin
+      MasterUserPassword: ChangeMe123!
+      DBName: agroflightops
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      PubliclyAccessible: false
+
+  DocumentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "vistaagrotech-${Environment}-documents"
+
+Outputs:
+  DBEndpoint:
+    Value: !GetAtt MySQLDB.Endpoint.Address

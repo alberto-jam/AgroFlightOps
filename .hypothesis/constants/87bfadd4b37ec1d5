@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\api\documentos_oficiais.py
+# hypothesis_version: 6.151.9
+
+[100, 201, '/documentos-oficiais', '/{documento_id}', 'ADMINISTRADOR', 'Documentos Oficiais', 'expires_in', 'url']

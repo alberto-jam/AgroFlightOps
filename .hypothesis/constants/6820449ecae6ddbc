@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\api\relatorios.py
+# hypothesis_version: 6.151.9
+
+['/area-por-cliente', '/financeiro', '/missoes-por-status', '/relatorios', '/utilizacao-drones', 'ADMINISTRADOR', 'Data fim do período', 'FINANCEIRO', 'Relatórios']

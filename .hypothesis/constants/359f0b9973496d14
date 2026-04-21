@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\services\talhao_service.py
+# hypothesis_version: 6.151.9
+
+['ATUALIZACAO', 'CRIACAO', 'EXCLUSAO', 'TALHAO', 'area_hectares', 'cultura_id', 'geojson', 'latitude', 'longitude', 'nome', 'observacoes', 'ponto_referencia']

@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\api\talhoes.py
+# hypothesis_version: 6.151.9
+
+[100, 201, '/talhoes', '/{talhao_id}', 'ADMINISTRADOR', 'Talhões']

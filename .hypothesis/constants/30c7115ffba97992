@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\services\missao_service.py
+# hypothesis_version: 6.151.9
+
+['ATUALIZACAO', 'CRIACAO', 'MISSAO', 'area_prevista', 'area_realizada', 'data_agendada', 'drone_id', 'endereco_operacao', 'finalizado_em', 'hora_agendada', 'iniciado_em', 'janela_operacional', 'latitude_operacao', 'longitude_operacao', 'observacoes_execucao', 'piloto_id', 'referencia_operacao', 'restricoes', 'status', 'tecnico_id', 'volume_previsto', 'volume_realizado']

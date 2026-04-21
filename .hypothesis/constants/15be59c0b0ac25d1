@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\services\drone_service.py
+# hypothesis_version: 6.151.9
+
+['ATUALIZACAO', 'CRIACAO', 'DRONE', 'EXCLUSAO', 'capacidade_litros', 'fabricante', 'identificacao', 'modelo', 'status']

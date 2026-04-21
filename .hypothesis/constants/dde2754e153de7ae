@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\services\relatorio_service.py
+# hypothesis_version: 6.151.9
+
+[3600, '0', 'SECOND', 'cliente_id', 'cliente_nome', 'data_fim', 'data_inicio', 'drone_id', 'drone_identificacao', 'drone_modelo', 'horas_voadas_periodo', 'items', 'status', 'total', 'total_custo_estimado', 'total_geral', 'total_missoes', 'total_valor_faturado']

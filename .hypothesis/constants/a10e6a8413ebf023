@@ -1,0 +1,4 @@
+# file: C:\Users\AlbertoMoreira\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\aiomysql\__init__.py
+# hypothesis_version: 6.151.9
+
+['Connection', 'Cursor', 'DataError', 'DatabaseError', 'DictCursor', 'Error', 'IntegrityError', 'InterfaceError', 'InternalError', 'MySQLError', 'NotSupportedError', 'OperationalError', 'Pool', 'ProgrammingError', 'SSCursor', 'SSDictCursor', 'Warning', 'connect', 'create_pool', 'escape_dict', 'escape_sequence', 'escape_string']

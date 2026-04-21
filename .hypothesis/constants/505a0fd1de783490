@@ -1,0 +1,4 @@
+# file: D:\Projetos\VISTA AGROTECH\KiroApp\app\models\__init__.py
+# hypothesis_version: 6.151.9
+
+['Auditoria', 'Bateria', 'BateriaStatus', 'ChecklistMissao', 'ChecklistStatusGeral', 'Cliente', 'ConsumoInsumoMissao', 'Cultura', 'DocumentoEntidade', 'DocumentoOficial', 'DocumentoStatus', 'Drone', 'DroneStatus', 'Evidencia', 'FinanceiroMissao', 'FinanceiroStatus', 'HistoricoStatusOS', 'Insumo', 'ItemChecklistMissao', 'ItemChecklistPadrao', 'ItemChecklistStatus', 'Manutencao', 'Missao', 'MissaoBateria', 'MissaoStatus', 'Ocorrencia', 'OrdemServico', 'OrdemServicoStatus', 'Perfil', 'Prioridade', 'Propriedade', 'ReservaInsumo', 'Severidade', 'Talhao', 'TipoOcorrencia', 'Usuario']
