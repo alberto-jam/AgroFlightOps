@@ -198,7 +198,7 @@ jobs:
         run: npm run build
         working-directory: frontend/
         env:
-          VITE_API_URL: ${{ vars[format('API_URL_{0}', env.ENV)] || format('https://api-{0}.agroflightops.com', env.ENV) }}
+          VITE_API_BASE_URL: ${{ vars[format('API_URL_{0}', env.ENV)] || format('https://api-{0}.agroflightops.com', env.ENV) }}
 
       - name: Prepare backend for SAM build
         run: |
