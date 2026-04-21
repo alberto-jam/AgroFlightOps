@@ -1,12 +1,14 @@
 """AgroFlightOps Backend — FastAPI application with Mangum handler for AWS Lambda."""
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from mangum import Mangum
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.database import get_db
 from app.core.exceptions import (
     BusinessRuleViolationError,
     DependencyActiveError,
@@ -173,6 +175,25 @@ app.include_router(relatorios_router)
 async def health_check():
     """Health check endpoint."""
     return {"status": "ok"}
+
+
+# --- TEMPORÁRIO: endpoint para resetar senha do admin (REMOVER após primeiro login) ---
+@app.post("/admin-setup", tags=["Setup"])
+async def admin_setup(
+    db: AsyncSession = Depends(get_db),  # noqa: B008
+):
+    """Reset admin password to Admin@123. REMOVE THIS ENDPOINT after first login."""
+    from app.core.security import hash_password
+    from sqlalchemy import text
+
+    new_hash = hash_password("Admin@123")
+    await db.execute(
+        text("UPDATE usuarios SET senha_hash = :h WHERE email = :e"),
+        {"h": new_hash, "e": "admin@agroflightops.com"},
+    )
+    await db.commit()
+    return {"status": "ok", "message": "Senha do admin resetada para Admin@123"}
+# --- FIM TEMPORÁRIO ---
 
 
 # Mangum handler for AWS Lambda + API Gateway
