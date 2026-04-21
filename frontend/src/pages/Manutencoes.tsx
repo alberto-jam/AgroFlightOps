@@ -160,7 +160,7 @@ export default function Manutencoes() {
                 data_manutencao: dayjs(editing.data_manutencao),
                 proxima_manutencao: editing.proxima_manutencao ? dayjs(editing.proxima_manutencao) : null,
                 horas_na_data: editing.horas_na_data,
-              } as any
+              } as unknown as Record<string, unknown>
             : undefined
         }
       >

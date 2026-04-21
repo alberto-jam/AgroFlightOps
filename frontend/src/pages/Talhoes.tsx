@@ -158,7 +158,7 @@ export default function Talhoes() {
                 area_hectares: editing.area_hectares,
                 cultura_id: editing.cultura_id,
                 geojson: editing.geojson ? JSON.stringify(editing.geojson, null, 2) : undefined,
-              } as any
+              } as unknown as Record<string, unknown>
             : undefined
         }
       >

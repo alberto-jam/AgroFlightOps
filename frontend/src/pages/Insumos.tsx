@@ -147,7 +147,7 @@ export default function Insumos() {
                 saldo_atual: editing.saldo_atual,
                 lote: editing.lote,
                 validade: editing.validade ? dayjs(editing.validade) : undefined,
-              } as any
+              } as unknown as Record<string, unknown>
             : undefined
         }
       >
