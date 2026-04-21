@@ -242,6 +242,7 @@ jobs:
           sam deploy \
             --config-env ${{ env.CONFIG_ENV }} \
             --no-fail-on-empty-changeset \
+            --resolve-s3 \
             --parameter-overrides \
               "DatabaseUrl=${{ secrets[format('DATABASE_URL_{0}', env.ENV)] }}" \
               "JwtSecret=${{ secrets[format('JWT_SECRET_{0}', env.ENV)] }}" \
