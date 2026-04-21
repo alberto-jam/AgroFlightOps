@@ -61,3 +61,23 @@ x.y
  e fazer push
  Para PRD: criar tag v1.0.0 — workflow aguardará aprovação manual
 Comece pelo passo 1 e vá marcando. O passo mais crítico é o 2 (OIDC) — sem ele o workflow não consegue autenticar com a AWS. Se travar em algum ponto, me chama.
+
+======================================
+Inserir primeiro administrador:
+
+INSERT INTO perfis (nome, descricao) VALUES ('ADMINISTRADOR', 'Administrador do sistema')
+ON DUPLICATE KEY UPDATE nome = nome;
+
+-- Crie o usuário admin (senha: Admin@123 hasheada com bcrypt)
+INSERT INTO usuarios (nome, email, senha_hash, perfil_id, ativo, created_at, updated_at)
+VALUES (
+  'Alberto Moreira',
+  'admin@agroflightops.com',
+  '$2b$12$LJ3m4ys3Lk0TSwHjfT8/.OB8JxKxGZGKl1L7VDBsGOIAU3p.8mOi6',
+  (SELECT id FROM perfis WHERE nome = 'ADMINISTRADOR'),
+  1,
+  NOW(),
+  NOW()
+);
+Email: admin@agroflightops.com
+Senha: Admin@123
