@@ -194,14 +194,20 @@ jobs:
       - name: Setup AWS SAM CLI
         uses: aws-actions/setup-sam@v2
 
-      - name: Build backend (SAM)
-        run: sam build --use-container
-
       - name: Build frontend
         run: npm run build
         working-directory: frontend/
         env:
           VITE_API_URL: ${{ vars[format('API_URL_{0}', env.ENV)] || format('https://api-{0}.agroflightops.com', env.ENV) }}
+
+      - name: Prepare backend for SAM build
+        run: |
+          mv frontend/dist /tmp/frontend-dist
+          cp requirements-lambda.txt requirements.txt
+          rm -rf frontend node_modules .git .hypothesis .kiro .pytest_cache tests
+
+      - name: Build backend (SAM)
+        run: sam build --use-container
 
       # -----------------------------------------------------------------------
       # Migração Flyway (Task 5.4)
@@ -264,7 +270,7 @@ jobs:
           echo "### 🚀 API URL: ${API_URL}" >> $GITHUB_STEP_SUMMARY
 
       - name: Deploy frontend to S3
-        run: aws s3 sync frontend/dist/ s3://${{ steps.stack-outputs.outputs.BUCKET_NAME }} --delete
+        run: aws s3 sync /tmp/frontend-dist/ s3://${{ steps.stack-outputs.outputs.BUCKET_NAME }} --delete
 
       - name: Invalidate CloudFront cache
         run: |
