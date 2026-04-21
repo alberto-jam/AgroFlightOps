@@ -173,4 +173,6 @@ async def health_check():
 
 
 # Mangum handler for AWS Lambda + API Gateway
-handler = Mangum(app, lifespan="off")
+# api_gateway_base_path strips the stage prefix (e.g. "/dev") from the path
+_base_path = f"/{settings.APP_ENV}" if settings.APP_ENV else ""
+handler = Mangum(app, lifespan="off", api_gateway_base_path=_base_path)
