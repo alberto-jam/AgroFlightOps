@@ -48,8 +48,8 @@ export default function Propriedades() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao salvar propriedade.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao salvar propriedade.');
     } finally {
       setSaving(false);
     }
@@ -60,8 +60,8 @@ export default function Propriedades() {
       await apiClient.patch(`/propriedades/${record.id}`, { ativo: !record.ativo });
       message.success(record.ativo ? 'Propriedade desativada.' : 'Propriedade ativada.');
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao alterar status.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao alterar status.');
     }
   };
 

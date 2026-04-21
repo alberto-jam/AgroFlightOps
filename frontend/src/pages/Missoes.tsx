@@ -175,7 +175,7 @@ export default function Missoes() {
   const openCreate = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     setSaving(true);
     try {
       const payload: MissaoCreate = {
@@ -187,8 +187,8 @@ export default function Missoes() {
       message.success('Missão criada.');
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao criar missão.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao criar missão.');
     } finally {
       setSaving(false);
     }
@@ -215,8 +215,8 @@ export default function Missoes() {
       message.success(`Missão: ${transModal.label.toLowerCase()} com sucesso.`);
       setTransModal(null);
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro na transição de status.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro na transição de status.');
     } finally {
       setTransLoading(false);
     }
@@ -254,7 +254,7 @@ export default function Missoes() {
     }
   };
 
-  const handleAddBateria = async (values: any) => {
+  const handleAddBateria = async (values: Record<string, unknown>) => {
     if (!batMissao) return;
     setBatAdding(true);
     try {
@@ -265,8 +265,8 @@ export default function Missoes() {
       message.success('Bateria associada.');
       setBatFormOpen(false);
       openBaterias(batMissao);
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao associar bateria.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao associar bateria.');
     } finally {
       setBatAdding(false);
     }
@@ -288,7 +288,7 @@ export default function Missoes() {
     }
   };
 
-  const handleAddReserva = async (values: any) => {
+  const handleAddReserva = async (values: Record<string, unknown>) => {
     if (!resMissao) return;
     setResAdding(true);
     try {
@@ -300,8 +300,8 @@ export default function Missoes() {
       message.success('Reserva de insumo criada.');
       setResFormOpen(false);
       openReservas(resMissao);
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao criar reserva.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao criar reserva.');
     } finally {
       setResAdding(false);
     }
@@ -353,16 +353,17 @@ export default function Missoes() {
       });
       message.success('Dados de execução salvos.');
       refresh();
-    } catch (err: any) {
-      if (err?.response?.data?.detail) {
-        message.error(err.response.data.detail);
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      if (detail) {
+        message.error(detail);
       }
     } finally {
       setExecSaving(false);
     }
   };
 
-  const handleAddConsumo = async (values: any) => {
+  const handleAddConsumo = async (values: Record<string, unknown>) => {
     if (!execMissao) return;
     setConsumoAdding(true);
     try {
@@ -380,8 +381,8 @@ export default function Missoes() {
         `/missoes/${execMissao.id}/consumos-insumo`,
       );
       setConsumosList(data);
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao registrar consumo.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao registrar consumo.');
     } finally {
       setConsumoAdding(false);
     }
@@ -405,8 +406,8 @@ export default function Missoes() {
         '/evidencias', { params: { missao_id: execMissao.id, page_size: 100 } },
       );
       setEvidenciasList(data.items);
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao enviar evidência.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao enviar evidência.');
     } finally {
       setEvidUploading(false);
     }

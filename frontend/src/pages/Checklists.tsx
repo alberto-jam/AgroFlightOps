@@ -66,9 +66,9 @@ export default function Checklists() {
         `/missoes/${missaoId}/checklist`,
       );
       setChecklist(data);
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail;
-      if (err?.response?.status === 404) {
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      if ((err as { response?: { status?: number } })?.response?.status === 404) {
         setChecklist(null);
         message.info(detail || 'Nenhum checklist encontrado para esta missão.');
       } else {
@@ -110,8 +110,8 @@ export default function Checklists() {
       message.success('Item atualizado.');
       setEditItem(null);
       loadChecklist(selectedMissaoId);
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao atualizar item.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao atualizar item.');
     } finally {
       setItemSaving(false);
     }
@@ -125,8 +125,8 @@ export default function Checklists() {
       await apiClient.post(`/missoes/${selectedMissaoId}/checklist/concluir`);
       message.success('Checklist concluído.');
       loadChecklist(selectedMissaoId);
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao concluir checklist.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao concluir checklist.');
     } finally {
       setActionLoading(false);
     }
@@ -140,8 +140,8 @@ export default function Checklists() {
       await apiClient.post(`/missoes/${selectedMissaoId}/checklist/aprovar`);
       message.success('Checklist aprovado. Missão liberada.');
       loadChecklist(selectedMissaoId);
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao aprovar checklist.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao aprovar checklist.');
     } finally {
       setActionLoading(false);
     }

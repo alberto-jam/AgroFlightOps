@@ -154,7 +154,7 @@ export default function OrdensServico() {
   };
   const closeModal = () => { setModalOpen(false); setEditing(null); };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     setSaving(true);
     try {
       const payload = {
@@ -178,8 +178,8 @@ export default function OrdensServico() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao salvar OS.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao salvar OS.');
     } finally {
       setSaving(false);
     }
@@ -207,8 +207,8 @@ export default function OrdensServico() {
       message.success(`OS ${transModal.label.toLowerCase()} com sucesso.`);
       setTransModal(null);
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro na transição de status.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro na transição de status.');
     } finally {
       setTransLoading(false);
     }

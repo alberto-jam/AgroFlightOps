@@ -46,7 +46,7 @@ export default function Documentos() {
   const openCreate = () => { setSelectedFile(null); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setSelectedFile(null); };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     if (!selectedFile) {
       message.warning('Selecione um arquivo para upload.');
       return;
@@ -68,8 +68,8 @@ export default function Documentos() {
       message.success('Documento enviado com sucesso.');
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao enviar documento.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao enviar documento.');
     } finally {
       setSaving(false);
     }
@@ -81,8 +81,8 @@ export default function Documentos() {
         `/documentos-oficiais/${id}/download`,
       );
       window.open(data.url, '_blank');
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao baixar documento.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao baixar documento.');
     }
   };
 

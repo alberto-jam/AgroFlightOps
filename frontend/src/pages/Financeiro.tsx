@@ -60,12 +60,12 @@ export default function Financeiro() {
         status_financeiro: data.status_financeiro,
         observacoes: data.observacoes,
       });
-    } catch (err: any) {
-      if (err?.response?.status === 404) {
+    } catch (err: unknown) {
+      if ((err as { response?: { status?: number } })?.response?.status === 404) {
         message.info('Registro financeiro ainda não criado para esta missão.');
         setSelectedMissao(null);
       } else {
-        message.error(err?.response?.data?.detail || 'Erro ao carregar dados financeiros.');
+        message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao carregar dados financeiros.');
       }
     } finally {
       setLoadingDetail(false);
@@ -91,8 +91,8 @@ export default function Financeiro() {
       setFinanceiro(data);
       message.success('Dados financeiros atualizados.');
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao salvar dados financeiros.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao salvar dados financeiros.');
     } finally {
       setSaving(false);
     }
@@ -107,8 +107,8 @@ export default function Financeiro() {
       setEncerrarMissao(null);
       setSelectedMissao(null);
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao encerrar financeiramente.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao encerrar financeiramente.');
     } finally {
       setEncerrarLoading(false);
     }

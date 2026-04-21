@@ -43,7 +43,7 @@ export default function Manutencoes() {
   const openEdit = (record: ManutencaoResponse) => { setEditing(record); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setEditing(null); };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     setSaving(true);
     try {
       const payload: Record<string, unknown> = {
@@ -66,8 +66,8 @@ export default function Manutencoes() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao salvar manutenção.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao salvar manutenção.');
     } finally {
       setSaving(false);
     }

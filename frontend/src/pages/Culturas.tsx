@@ -35,8 +35,8 @@ export default function Culturas() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail;
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       message.error(detail || 'Erro ao salvar cultura.');
     } finally {
       setSaving(false);
@@ -48,8 +48,8 @@ export default function Culturas() {
       await apiClient.patch(`/culturas/${record.id}`, { ativo: !record.ativo });
       message.success(record.ativo ? 'Cultura desativada.' : 'Cultura ativada.');
       refresh();
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail;
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       message.error(detail || 'Erro ao alterar status da cultura.');
     }
   };

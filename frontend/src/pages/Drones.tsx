@@ -45,8 +45,8 @@ export default function Drones() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao salvar drone.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao salvar drone.');
     } finally {
       setSaving(false);
     }
@@ -57,8 +57,8 @@ export default function Drones() {
       await apiClient.patch(`/drones/${record.id}`, { ativo: !record.ativo });
       message.success(record.ativo ? 'Drone desativado.' : 'Drone ativado.');
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao alterar status.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao alterar status.');
     }
   };
 

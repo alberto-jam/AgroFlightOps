@@ -58,8 +58,8 @@ export default function Relatorios() {
       setAreaPorCliente(area.data);
       setFinResumo(fin.data);
       setUtilDrones(drones.data);
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao carregar relatórios.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao carregar relatórios.');
     } finally {
       setLoading(false);
     }

@@ -58,8 +58,8 @@ export default function Evidencias() {
       message.success('Evidência enviada com sucesso.');
       form.resetFields();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao enviar evidência.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao enviar evidência.');
     } finally {
       setUploading(false);
     }

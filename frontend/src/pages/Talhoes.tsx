@@ -35,7 +35,7 @@ export default function Talhoes() {
   const openEdit = (record: TalhaoResponse) => { setEditing(record); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setEditing(null); };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     setSaving(true);
     try {
       const payload = { ...values };
@@ -53,8 +53,8 @@ export default function Talhoes() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao salvar talhão.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao salvar talhão.');
     } finally {
       setSaving(false);
     }
@@ -65,8 +65,8 @@ export default function Talhoes() {
       await apiClient.patch(`/talhoes/${record.id}`, { ativo: !record.ativo });
       message.success(record.ativo ? 'Talhão desativado.' : 'Talhão ativado.');
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao alterar status.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao alterar status.');
     }
   };
 

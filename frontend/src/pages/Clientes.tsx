@@ -41,8 +41,8 @@ export default function Clientes() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail;
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       message.error(detail || 'Erro ao salvar cliente.');
     } finally {
       setSaving(false);
@@ -54,8 +54,8 @@ export default function Clientes() {
       await apiClient.patch(`/clientes/${record.id}`, { ativo: !record.ativo });
       message.success(record.ativo ? 'Cliente desativado.' : 'Cliente ativado.');
       refresh();
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail;
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       message.error(detail || 'Erro ao alterar status do cliente.');
     }
   };

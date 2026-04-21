@@ -47,8 +47,8 @@ export default function Usuarios() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail;
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       message.error(detail || 'Erro ao salvar usuário.');
     } finally {
       setSaving(false);
@@ -60,8 +60,8 @@ export default function Usuarios() {
       await apiClient.patch(`/usuarios/${record.id}`, { ativo: !record.ativo });
       message.success(record.ativo ? 'Usuário desativado.' : 'Usuário ativado.');
       refresh();
-    } catch (err: any) {
-      const detail = err?.response?.data?.detail;
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       message.error(detail || 'Erro ao alterar status do usuário.');
     }
   };

@@ -55,7 +55,7 @@ export default function Ocorrencias() {
 
   const refresh = () => setRefreshKey((k) => k + 1);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     setSaving(true);
     try {
       const payload: OcorrenciaCreate = {
@@ -68,8 +68,8 @@ export default function Ocorrencias() {
       message.success('Ocorrência registrada.');
       setModalOpen(false);
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao registrar ocorrência.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao registrar ocorrência.');
     } finally {
       setSaving(false);
     }

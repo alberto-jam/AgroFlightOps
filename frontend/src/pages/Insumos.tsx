@@ -25,7 +25,7 @@ export default function Insumos() {
   const openEdit = (record: InsumoResponse) => { setEditing(record); setModalOpen(true); };
   const closeModal = () => { setModalOpen(false); setEditing(null); };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     setSaving(true);
     try {
       const payload = { ...values };
@@ -43,8 +43,8 @@ export default function Insumos() {
       }
       closeModal();
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao salvar insumo.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao salvar insumo.');
     } finally {
       setSaving(false);
     }
@@ -55,8 +55,8 @@ export default function Insumos() {
       await apiClient.patch(`/insumos/${record.id}`, { ativo: !record.ativo });
       message.success(record.ativo ? 'Insumo desativado.' : 'Insumo ativado.');
       refresh();
-    } catch (err: any) {
-      message.error(err?.response?.data?.detail || 'Erro ao alterar status.');
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao alterar status.');
     }
   };
 
