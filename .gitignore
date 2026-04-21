@@ -1,0 +1,39 @@
+# =============================================
+# AgroFlightOps — .gitignore
+# =============================================
+
+# --- Credenciais e Secrets (NUNCA commitar!) ---
+*accessKeys*
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+*.egg
+
+# --- Node / Frontend ---
+node_modules/
+
+# --- IDE ---
+.vscode/settings.json
+.idea/
+
+# --- AWS SAM ---
+.aws-sam/
+
+# --- Pytest / Hypothesis ---
+.pytest_cache/
+.hypothesis/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
