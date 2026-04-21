@@ -1,0 +1,30 @@
+# Frontend (não faz parte da Lambda)
+frontend/
+node_modules/
+
+# Git e IDE
+.git/
+.github/
+.vscode/
+.kiro/
+
+# Infra e docs
+infra/
+database/
+docs/
+
+# Testes e cache
+tests/
+.pytest_cache/
+.hypothesis/
+__pycache__/
+
+# SAM build artifacts
+.aws-sam/
+
+# Outros
+*.md
+*.toml
+*.yml
+*.yaml
+!template.yaml
