@@ -17,6 +17,7 @@ import apiClient from '../api/client';
 import type { MissaoResponse, MissaoCreate, HistoricoStatusMissaoResponse } from '../types/missao';
 import type { MissaoStatus } from '../types/enums';
 import type { OrdemServicoResponse } from '../types/ordem-servico';
+import type { PropriedadeResponse } from '../types/propriedade';
 import type { UsuarioResponse } from '../types/usuario';
 import type { DroneResponse } from '../types/drone';
 import type { BateriaResponse } from '../types/bateria';
@@ -93,6 +94,7 @@ export default function Missoes() {
 
   // Dropdown data
   const [ordensServico, setOrdensServico] = useState<DropdownOption[]>([]);
+  const [ordensServicoRaw, setOrdensServicoRaw] = useState<OrdemServicoResponse[]>([]);
   const [pilotos, setPilotos] = useState<DropdownOption[]>([]);
   const [tecnicos, setTecnicos] = useState<DropdownOption[]>([]);
   const [drones, setDrones] = useState<DropdownOption[]>([]);
@@ -105,6 +107,11 @@ export default function Missoes() {
   } | null>(null);
   const [transMotivo, setTransMotivo] = useState('');
   const [transLoading, setTransLoading] = useState(false);
+  const [transRestricoes, setTransRestricoes] = useState('');
+  const [transObsPlanj, setTransObsPlanj] = useState('');
+  const [transDataAgendada, setTransDataAgendada] = useState<dayjs.Dayjs | null>(null);
+  const [transHoraAgendada, setTransHoraAgendada] = useState<dayjs.Dayjs | null>(null);
+  const [transObsExec, setTransObsExec] = useState('');
 
   // History modal
   const [historyMissao, setHistoryMissao] = useState<MissaoResponse | null>(null);
@@ -133,6 +140,8 @@ export default function Missoes() {
   const [consumosLoading, setConsumosLoading] = useState(false);
   const [consumoFormOpen, setConsumoFormOpen] = useState(false);
   const [consumoAdding, setConsumoAdding] = useState(false);
+  const [novoInsumoOpen, setNovoInsumoOpen] = useState(false);
+  const [novoInsumoSaving, setNovoInsumoSaving] = useState(false);
   const [evidenciasList, setEvidenciasList] = useState<EvidenciaResponse[]>([]);
   const [evidenciasLoading, setEvidenciasLoading] = useState(false);
   const [evidUploading, setEvidUploading] = useState(false);
@@ -145,9 +154,10 @@ export default function Missoes() {
   useEffect(() => {
     apiClient.get<{ items: OrdemServicoResponse[] }>('/ordens-servico', {
       params: { page_size: 100, status: 'APROVADA' },
-    }).then(({ data }) =>
-      setOrdensServico(data.items.map((o) => ({ value: o.id, label: o.codigo }))),
-    );
+    }).then(({ data }) => {
+      setOrdensServicoRaw(data.items);
+      setOrdensServico(data.items.map((o) => ({ value: o.id, label: o.codigo })));
+    });
     apiClient.get<{ items: UsuarioResponse[] }>('/usuarios', { params: { page_size: 100 } })
       .then(({ data }) => {
         const all = data.items.map((u) => ({ value: u.id, label: u.nome }));
@@ -184,6 +194,23 @@ const handleSubmit = async (values: any) => {
         data_agendada: dayjs(values.data_agendada).format('YYYY-MM-DD'),
         hora_agendada: dayjs(values.hora_agendada).format('HH:mm:ss'),
       };
+      // Auto-fill location from propriedade
+      const selectedOS = ordensServicoRaw.find((o) => o.id === values.ordem_servico_id);
+      if (selectedOS?.propriedade_id) {
+        try {
+          const { data: prop } = await apiClient.get<PropriedadeResponse>(
+            `/propriedades/${selectedOS.propriedade_id}`,
+          );
+          payload.latitude_operacao = prop.latitude;
+          payload.longitude_operacao = prop.longitude;
+          payload.endereco_operacao = [prop.endereco, prop.numero].filter(Boolean).join(' ')
+            + (prop.municipio ? `, ${prop.municipio}` : '')
+            + (prop.estado ? ` - ${prop.estado}` : '');
+          payload.referencia_operacao = prop.referencia_local;
+        } catch {
+          // Non-blocking: proceed without location data
+        }
+      }
       await apiClient.post('/missoes', payload);
       message.success('Missão criada.');
       closeModal();
@@ -199,6 +226,16 @@ const handleSubmit = async (values: any) => {
   const openTransition = (missao: MissaoResponse, target: MissaoStatus, label: string) => {
     setTransModal({ missao, target, label });
     setTransMotivo('');
+    setTransRestricoes('');
+    setTransObsPlanj('');
+    setTransObsExec('');
+    if (target === 'AGENDADA') {
+      setTransDataAgendada(missao.data_agendada ? dayjs(missao.data_agendada) : null);
+      setTransHoraAgendada(missao.hora_agendada ? dayjs(missao.hora_agendada, 'HH:mm:ss') : null);
+    } else {
+      setTransDataAgendada(null);
+      setTransHoraAgendada(null);
+    }
   };
 
   const handleTransition = async () => {
@@ -209,10 +246,23 @@ const handleSubmit = async (values: any) => {
     }
     setTransLoading(true);
     try {
-      await apiClient.patch(`/missoes/${transModal.missao.id}/transicao`, {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const body: any = {
         status_novo: transModal.target,
         motivo: transMotivo || undefined,
-      });
+      };
+      if (transModal.target === 'PLANEJADA') {
+        body.restricoes = transRestricoes || undefined;
+        body.observacoes_planejamento = transObsPlanj || undefined;
+      }
+      if (transModal.target === 'AGENDADA') {
+        body.data_agendada = transDataAgendada ? transDataAgendada.format('YYYY-MM-DD') : undefined;
+        body.hora_agendada = transHoraAgendada ? transHoraAgendada.format('HH:mm:ss') : undefined;
+      }
+      if (transModal.target === 'EM_EXECUCAO') {
+        body.observacoes_execucao = transObsExec || undefined;
+      }
+      await apiClient.patch(`/missoes/${transModal.missao.id}/transicao`, body);
       message.success(`Missão: ${transModal.label.toLowerCase()} com sucesso.`);
       setTransModal(null);
       refresh();
@@ -414,6 +464,31 @@ const handleAddConsumo = async (values: any) => {
       message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao enviar evidência.');
     } finally {
       setEvidUploading(false);
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleCreateInsumo = async (values: any) => {
+    setNovoInsumoSaving(true);
+    try {
+      const { data: newInsumo } = await apiClient.post<InsumoResponse>('/insumos', {
+        nome: values.nome,
+        fabricante: values.fabricante || null,
+        unidade_medida: values.unidade_medida,
+        saldo_atual: values.saldo_atual ?? 0,
+      });
+      message.success('Insumo criado.');
+      // Refresh insumos dropdown
+      const { data: insData } = await apiClient.get<{ items: InsumoResponse[] }>('/insumos', { params: { page_size: 100 } });
+      setInsumos(insData.items.map((i) => ({ value: i.id, label: `${i.nome} (${i.unidade_medida})` })));
+      setNovoInsumoOpen(false);
+      // Auto-select the new insumo in the consumo form is not straightforward since FormModal manages its own form,
+      // but we can notify the user
+      message.info(`Insumo "${newInsumo.nome}" disponível para seleção.`);
+    } catch (err: unknown) {
+      message.error((err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erro ao criar insumo.');
+    } finally {
+      setNovoInsumoSaving(false);
     }
   };
 
@@ -662,9 +737,6 @@ const handleAddConsumo = async (values: any) => {
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item name="observacoes_planejamento" label="Observações">
-          <Input.TextArea rows={3} maxLength={2000} />
-        </Form.Item>
       </FormModal>
 
       {/* Transition Confirmation Modal */}
@@ -694,6 +766,63 @@ const handleAddConsumo = async (values: any) => {
               value={transMotivo}
               onChange={(e) => setTransMotivo(e.target.value)}
               placeholder="Informe o motivo (obrigatório)"
+            />
+          </Form.Item>
+        )}
+        {transModal?.target === 'PLANEJADA' && (
+          <>
+            <Form.Item label="Restrições">
+              <Input.TextArea
+                rows={3}
+                value={transRestricoes}
+                onChange={(e) => setTransRestricoes(e.target.value)}
+                placeholder="Restrições da missão"
+                maxLength={2000}
+              />
+            </Form.Item>
+            <Form.Item label="Observações do Planejamento">
+              <Input.TextArea
+                rows={3}
+                value={transObsPlanj}
+                onChange={(e) => setTransObsPlanj(e.target.value)}
+                placeholder="Observações do planejamento"
+                maxLength={2000}
+              />
+            </Form.Item>
+          </>
+        )}
+        {transModal?.target === 'AGENDADA' && (
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Data Agendada">
+                <DatePicker
+                  style={{ width: '100%' }}
+                  format="DD/MM/YYYY"
+                  value={transDataAgendada}
+                  onChange={(d) => setTransDataAgendada(d)}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Hora Agendada">
+                <TimePicker
+                  style={{ width: '100%' }}
+                  format="HH:mm"
+                  value={transHoraAgendada}
+                  onChange={(t) => setTransHoraAgendada(t)}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
+        {transModal?.target === 'EM_EXECUCAO' && (
+          <Form.Item label="Observações da Execução">
+            <Input.TextArea
+              rows={3}
+              value={transObsExec}
+              onChange={(e) => setTransObsExec(e.target.value)}
+              placeholder="Observações da execução"
+              maxLength={2000}
             />
           </Form.Item>
         )}
@@ -886,7 +1015,10 @@ const handleAddConsumo = async (values: any) => {
                     width={500}
                   >
                     <Form.Item name="insumo_id" label="Insumo" rules={[{ required: true, message: 'Selecione o insumo' }]}>
-                      <Select options={insumos} showSearch optionFilterProp="label" placeholder="Selecione" />
+                      <Space.Compact style={{ width: '100%' }}>
+                        <Select options={insumos} showSearch optionFilterProp="label" placeholder="Selecione" style={{ flex: 1 }} />
+                        <Button icon={<PlusOutlined />} onClick={() => setNovoInsumoOpen(true)}>Novo</Button>
+                      </Space.Compact>
                     </Form.Item>
                     <Row gutter={16}>
                       <Col span={12}>
@@ -905,6 +1037,27 @@ const handleAddConsumo = async (values: any) => {
                     </Form.Item>
                     <Form.Item name="justificativa_excesso" label="Justificativa de Excesso" extra="Obrigatório quando a quantidade excede a reserva">
                       <Input.TextArea rows={2} maxLength={2000} />
+                    </Form.Item>
+                  </FormModal>
+                  <FormModal
+                    open={novoInsumoOpen}
+                    title="Novo Insumo"
+                    onCancel={() => setNovoInsumoOpen(false)}
+                    onSubmit={handleCreateInsumo}
+                    loading={novoInsumoSaving}
+                    width={450}
+                  >
+                    <Form.Item name="nome" label="Nome" rules={[{ required: true, message: 'Informe o nome' }]}>
+                      <Input maxLength={200} />
+                    </Form.Item>
+                    <Form.Item name="fabricante" label="Fabricante">
+                      <Input maxLength={200} />
+                    </Form.Item>
+                    <Form.Item name="unidade_medida" label="Unidade de Medida" rules={[{ required: true, message: 'Informe a unidade' }]}>
+                      <Input maxLength={30} placeholder="Ex: L, kg, mL" />
+                    </Form.Item>
+                    <Form.Item name="saldo_atual" label="Saldo Atual">
+                      <InputNumber min={0} style={{ width: '100%' }} />
                     </Form.Item>
                   </FormModal>
                 </>
