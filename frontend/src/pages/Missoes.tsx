@@ -100,6 +100,7 @@ export default function Missoes() {
   const [drones, setDrones] = useState<DropdownOption[]>([]);
   const [baterias, setBaterias] = useState<DropdownOption[]>([]);
   const [insumos, setInsumos] = useState<DropdownOption[]>([]);
+  const [insumosRaw, setInsumosRaw] = useState<InsumoResponse[]>([]);
 
   // Transition modal
   const [transModal, setTransModal] = useState<{
@@ -173,9 +174,10 @@ export default function Missoes() {
         setBaterias(data.items.map((b) => ({ value: b.id, label: b.identificacao }))),
       );
     apiClient.get<{ items: InsumoResponse[] }>('/insumos', { params: { page_size: 100 } })
-      .then(({ data }) =>
-        setInsumos(data.items.map((i) => ({ value: i.id, label: `${i.nome} (${i.unidade_medida})` }))),
-      );
+      .then(({ data }) => {
+        setInsumosRaw(data.items);
+        setInsumos(data.items.map((i) => ({ value: i.id, label: `${i.nome} (${i.unidade_medida})` })));
+      });
   }, []);
 
   const lookupLabel = (list: DropdownOption[], id: number) =>
@@ -480,6 +482,7 @@ const handleAddConsumo = async (values: any) => {
       message.success('Insumo criado.');
       // Refresh insumos dropdown
       const { data: insData } = await apiClient.get<{ items: InsumoResponse[] }>('/insumos', { params: { page_size: 100 } });
+      setInsumosRaw(insData.items);
       setInsumos(insData.items.map((i) => ({ value: i.id, label: `${i.nome} (${i.unidade_medida})` })));
       setNovoInsumoOpen(false);
       // Auto-select the new insumo in the consumo form is not straightforward since FormModal manages its own form,
@@ -1014,30 +1017,49 @@ const handleAddConsumo = async (values: any) => {
                     loading={consumoAdding}
                     width={500}
                   >
-                    <Form.Item name="insumo_id" label="Insumo" rules={[{ required: true, message: 'Selecione o insumo' }]}>
-                      <Space.Compact style={{ width: '100%' }}>
-                        <Select options={insumos} showSearch optionFilterProp="label" placeholder="Selecione" style={{ flex: 1 }} />
-                        <Button icon={<PlusOutlined />} onClick={() => setNovoInsumoOpen(true)}>Novo</Button>
-                      </Space.Compact>
-                    </Form.Item>
-                    <Row gutter={16}>
-                      <Col span={12}>
-                        <Form.Item name="quantidade_realizada" label="Quantidade Realizada" rules={[{ required: true, message: 'Informe a quantidade' }]}>
-                          <InputNumber min={0} style={{ width: '100%' }} />
+                    {(form) => (
+                      <>
+                        <Form.Item label="Insumo" required>
+                          <Row gutter={8}>
+                            <Col flex="auto">
+                              <Form.Item name="insumo_id" noStyle rules={[{ required: true, message: 'Selecione o insumo' }]}>
+                                <Select
+                                  options={insumos}
+                                  showSearch
+                                  optionFilterProp="label"
+                                  placeholder="Selecione"
+                                  onChange={(id: number) => {
+                                    const ins = insumosRaw.find((i) => i.id === id);
+                                    if (ins) form.setFieldValue('unidade_medida', ins.unidade_medida);
+                                  }}
+                                />
+                              </Form.Item>
+                            </Col>
+                            <Col flex="none">
+                              <Button icon={<PlusOutlined />} onClick={() => setNovoInsumoOpen(true)}>Novo</Button>
+                            </Col>
+                          </Row>
                         </Form.Item>
-                      </Col>
-                      <Col span={12}>
-                        <Form.Item name="unidade_medida" label="Unidade de Medida" rules={[{ required: true, message: 'Informe a unidade' }]}>
-                          <Input maxLength={30} placeholder="Ex: L, kg, mL" />
+                        <Row gutter={16}>
+                          <Col span={12}>
+                            <Form.Item name="quantidade_realizada" label="Quantidade Realizada" rules={[{ required: true, message: 'Informe a quantidade' }]}>
+                              <InputNumber min={0} style={{ width: '100%' }} />
+                            </Form.Item>
+                          </Col>
+                          <Col span={12}>
+                            <Form.Item name="unidade_medida" label="Unidade de Medida" rules={[{ required: true, message: 'Informe a unidade' }]}>
+                              <Input maxLength={30} placeholder="Preenchido ao selecionar insumo" readOnly />
+                            </Form.Item>
+                          </Col>
+                        </Row>
+                        <Form.Item name="observacoes" label="Observações">
+                          <Input.TextArea rows={2} maxLength={2000} />
                         </Form.Item>
-                      </Col>
-                    </Row>
-                    <Form.Item name="observacoes" label="Observações">
-                      <Input.TextArea rows={2} maxLength={2000} />
-                    </Form.Item>
-                    <Form.Item name="justificativa_excesso" label="Justificativa de Excesso" extra="Obrigatório quando a quantidade excede a reserva">
-                      <Input.TextArea rows={2} maxLength={2000} />
-                    </Form.Item>
+                        <Form.Item name="justificativa_excesso" label="Justificativa de Excesso" extra="Obrigatório quando a quantidade excede a reserva">
+                          <Input.TextArea rows={2} maxLength={2000} />
+                        </Form.Item>
+                      </>
+                    )}
                   </FormModal>
                   <FormModal
                     open={novoInsumoOpen}
