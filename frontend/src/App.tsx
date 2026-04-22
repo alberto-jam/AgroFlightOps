@@ -12,6 +12,7 @@ import Propriedades from './pages/Propriedades';
 import Talhoes from './pages/Talhoes';
 import Culturas from './pages/Culturas';
 import TiposOcorrencia from './pages/TiposOcorrencia';
+import ItensChecklistPadrao from './pages/ItensChecklistPadrao';
 import Drones from './pages/Drones';
 import Baterias from './pages/Baterias';
 import Insumos from './pages/Insumos';
@@ -47,6 +48,7 @@ export default function App() {
                 <Route path="/culturas" element={<Culturas />} />
                 <Route path="/insumos" element={<Insumos />} />
                 <Route path="/tipos-ocorrencia" element={<TiposOcorrencia />} />
+                <Route path="/itens-checklist-padrao" element={<ItensChecklistPadrao />} />
 
                 {/* Frota — Administrador only */}
                 <Route path="/drones" element={<Drones />} />

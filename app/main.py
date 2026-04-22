@@ -147,6 +147,7 @@ from app.api.documentos_oficiais import router as documentos_oficiais_router  # 
 from app.api.auditoria import router as auditoria_router  # noqa: E402
 from app.api.relatorios import router as relatorios_router  # noqa: E402
 from app.api.tipos_ocorrencia import router as tipos_ocorrencia_router  # noqa: E402
+from app.api.itens_checklist_padrao import router as itens_checklist_padrao_router  # noqa: E402
 from app.api.usuarios import router as usuarios_router  # noqa: E402
 
 app.include_router(auth_router)
@@ -169,6 +170,7 @@ app.include_router(documentos_oficiais_router)
 app.include_router(auditoria_router)
 app.include_router(relatorios_router)
 app.include_router(tipos_ocorrencia_router)
+app.include_router(itens_checklist_padrao_router)
 
 
 @app.get("/health", tags=["Health"])

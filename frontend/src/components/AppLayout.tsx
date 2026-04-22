@@ -109,6 +109,13 @@ const menuGroups: MenuGroup[] = [
         path: '/tipos-ocorrencia',
         allowedPerfis: ['ADMINISTRADOR', 'COORDENADOR_OPERACIONAL'],
       },
+      {
+        key: 'itens-checklist-padrao',
+        icon: <CheckSquareOutlined />,
+        label: 'Checklist Padrão',
+        path: '/itens-checklist-padrao',
+        allowedPerfis: ['ADMINISTRADOR', 'COORDENADOR_OPERACIONAL'],
+      },
     ],
   },
   {
