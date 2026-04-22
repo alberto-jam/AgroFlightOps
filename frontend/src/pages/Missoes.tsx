@@ -424,6 +424,7 @@ const handleAddConsumo = async (values: any) => {
     setConsumoAdding(true);
     try {
       await apiClient.post(`/missoes/${execMissao.id}/consumos-insumo`, {
+        missao_id: execMissao.id,
         insumo_id: values.insumo_id,
         quantidade_realizada: values.quantidade_realizada,
         unidade_medida: values.unidade_medida,
