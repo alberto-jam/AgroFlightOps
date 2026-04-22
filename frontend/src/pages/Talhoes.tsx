@@ -40,11 +40,6 @@ const handleSubmit = async (values: any) => {
     setSaving(true);
     try {
       const payload = { ...values };
-      if (typeof payload.geojson === 'string' && payload.geojson.trim()) {
-        payload.geojson = JSON.parse(payload.geojson);
-      } else if (!payload.geojson) {
-        payload.geojson = null;
-      }
       if (editing) {
         await apiClient.put(`/talhoes/${editing.id}`, payload);
         message.success('Talhão atualizado com sucesso.');
@@ -158,7 +153,8 @@ const handleSubmit = async (values: any) => {
                 nome: editing.nome,
                 area_hectares: editing.area_hectares,
                 cultura_id: editing.cultura_id,
-                geojson: editing.geojson ? JSON.stringify(editing.geojson, null, 2) : undefined,
+                latitude: editing.latitude,
+                longitude: editing.longitude,
               } as any // eslint-disable-line @typescript-eslint/no-explicit-any
             : undefined
         }
@@ -181,9 +177,18 @@ const handleSubmit = async (values: any) => {
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item name="geojson" label="GeoJSON (opcional)">
-          <Input.TextArea rows={4} placeholder='{"type": "Polygon", "coordinates": [...]}' />
-        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item name="latitude" label="Latitude">
+              <InputNumber min={-90} max={90} step={0.0000001} style={{ width: '100%' }} placeholder="-23.5505199" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="longitude" label="Longitude">
+              <InputNumber min={-180} max={180} step={0.0000001} style={{ width: '100%' }} placeholder="-46.6333094" />
+            </Form.Item>
+          </Col>
+        </Row>
       </FormModal>
     </div>
   );
