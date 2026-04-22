@@ -42,7 +42,6 @@ class ItemChecklistPadraoService:
         return await self.repo.list_paginated(
             page=page, page_size=page_size,
             filters=filters if filters else None,
-            order_by=[ItemChecklistPadrao.ordem_exibicao],
         )
 
     async def update(self, item_id: int, data: ItemChecklistPadraoUpdate, usuario_id: int | None = None) -> ItemChecklistPadrao:
