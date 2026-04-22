@@ -24,6 +24,7 @@ import {
   LogoutOutlined,
   WarningOutlined,
   CameraOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useAuth } from '../auth/useAuth';
@@ -99,6 +100,13 @@ const menuGroups: MenuGroup[] = [
         icon: <ExperimentOutlined />,
         label: 'Culturas',
         path: '/culturas',
+        allowedPerfis: ['ADMINISTRADOR', 'COORDENADOR_OPERACIONAL'],
+      },
+      {
+        key: 'tipos-ocorrencia',
+        icon: <ExclamationCircleOutlined />,
+        label: 'Tipos de Ocorrência',
+        path: '/tipos-ocorrencia',
         allowedPerfis: ['ADMINISTRADOR', 'COORDENADOR_OPERACIONAL'],
       },
     ],
