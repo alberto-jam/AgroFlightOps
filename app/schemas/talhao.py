@@ -33,6 +33,7 @@ class TalhaoUpdate(BaseModel):
     longitude: Decimal | None = Field(None, ge=-180, le=180)
     ponto_referencia: str | None = Field(None, max_length=255)
     geojson: dict[str, Any] | None = None
+    ativo: bool | None = None
 
 
 class TalhaoResponse(TalhaoBase):

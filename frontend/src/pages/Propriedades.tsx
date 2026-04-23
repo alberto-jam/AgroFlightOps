@@ -82,7 +82,7 @@ export default function Propriedades() {
     {
       title: 'Ações', key: 'acoes', width: 180,
       render: (_, record) => (
-        <Space>
+        <Space onClick={(e) => e.stopPropagation()}>
           <Button size="small" onClick={() => openEdit(record)}>Editar</Button>
           <Popconfirm
             title={record.ativo ? 'Desativar esta propriedade?' : 'Ativar esta propriedade?'}

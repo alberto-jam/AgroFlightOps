@@ -83,7 +83,7 @@ const handleSubmit = async (values: any) => {
     {
       title: 'Ações', key: 'acoes', width: 180,
       render: (_, record) => (
-        <Space>
+        <Space onClick={(e) => e.stopPropagation()}>
           <Button size="small" onClick={() => openEdit(record)}>Editar</Button>
           <Popconfirm
             title={record.ativo ? 'Desativar este talhão?' : 'Ativar este talhão?'}

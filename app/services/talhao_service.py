@@ -137,6 +137,8 @@ class TalhaoService:
             kwargs["ponto_referencia"] = data.ponto_referencia
         if data.geojson is not None:
             kwargs["geojson"] = data.geojson
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
 
         result = await self.repo.update(talhao_id, **kwargs)
         if usuario_id is not None:
