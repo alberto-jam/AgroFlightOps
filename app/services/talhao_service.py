@@ -108,6 +108,9 @@ class TalhaoService:
         old_values = entity_to_dict(talhao)
         kwargs: dict[str, Any] = {}
 
+        if data.propriedade_id is not None:
+            kwargs["propriedade_id"] = data.propriedade_id
+
         if data.nome is not None:
             existing = await self.repo.get_by_propriedade_and_nome(
                 talhao.propriedade_id, data.nome

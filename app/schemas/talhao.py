@@ -24,6 +24,7 @@ class TalhaoCreate(TalhaoBase):
 
 
 class TalhaoUpdate(BaseModel):
+    propriedade_id: int | None = None
     nome: str | None = Field(None, max_length=150)
     area_hectares: Decimal | None = Field(None, ge=0)
     cultura_id: int | None = None
