@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Col, Form, Input, InputNumber, message, Popconfirm, Row, Select, Space, Typography } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Col, Descriptions, Form, Input, InputNumber, message, Modal, Popconfirm, Row, Select, Space, Typography } from 'antd';
+import { EnvironmentOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import DataTable from '../components/DataTable';
 import FormModal from '../components/FormModal';
@@ -19,6 +19,7 @@ export default function Talhoes() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [filterPropriedade, setFilterPropriedade] = useState<number | undefined>();
   const [filterAtivo, setFilterAtivo] = useState<boolean | undefined>();
+  const [viewing, setViewing] = useState<TalhaoResponse | null>(null);
   const [propriedades, setPropriedades] = useState<{ value: number; label: string }[]>([]);
   const [culturas, setCulturas] = useState<{ value: number; label: string }[]>([]);
 
@@ -132,6 +133,7 @@ const handleSubmit = async (values: any) => {
         rowKey="id"
         extraParams={extraParams}
         refreshKey={refreshKey}
+        onRowClick={(record) => setViewing(record)}
         toolbar={
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Novo Talhão
@@ -153,8 +155,10 @@ const handleSubmit = async (values: any) => {
                 nome: editing.nome,
                 area_hectares: editing.area_hectares,
                 cultura_id: editing.cultura_id,
+                observacoes: editing.observacoes,
                 latitude: editing.latitude,
                 longitude: editing.longitude,
+                ponto_referencia: editing.ponto_referencia,
               } as any // eslint-disable-line @typescript-eslint/no-explicit-any
             : undefined
         }
@@ -189,7 +193,58 @@ const handleSubmit = async (values: any) => {
             </Form.Item>
           </Col>
         </Row>
+        <Form.Item name="ponto_referencia" label="Ponto de Referência">
+          <Input maxLength={255} />
+        </Form.Item>
+        <Form.Item name="observacoes" label="Observações">
+          <Input.TextArea rows={3} maxLength={2000} />
+        </Form.Item>
       </FormModal>
+
+      {/* View Modal with Google Maps */}
+      <Modal
+        open={!!viewing}
+        title={<Space><EnvironmentOutlined /> {viewing?.nome}</Space>}
+        onCancel={() => setViewing(null)}
+        footer={null}
+        width={950}
+      >
+        {viewing && (
+          <Row gutter={24}>
+            <Col span={12}>
+              <Descriptions column={1} size="small" bordered>
+                <Descriptions.Item label="ID">{viewing.id}</Descriptions.Item>
+                <Descriptions.Item label="Nome">{viewing.nome}</Descriptions.Item>
+                <Descriptions.Item label="Propriedade">{propLabel(viewing.propriedade_id)}</Descriptions.Item>
+                <Descriptions.Item label="Cultura">{culturaLabel(viewing.cultura_id)}</Descriptions.Item>
+                <Descriptions.Item label="Área">{viewing.area_hectares} ha</Descriptions.Item>
+                <Descriptions.Item label="Latitude">{viewing.latitude ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Longitude">{viewing.longitude ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Ponto de Referência">{viewing.ponto_referencia || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Observações">{viewing.observacoes || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Status">{viewing.ativo ? 'Ativo' : 'Inativo'}</Descriptions.Item>
+              </Descriptions>
+            </Col>
+            <Col span={12}>
+              {viewing.latitude && viewing.longitude ? (
+                <iframe
+                  title="Localização"
+                  width="100%"
+                  height="400"
+                  style={{ border: 0, borderRadius: 8 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://maps.google.com/maps?q=${viewing.latitude},${viewing.longitude}&z=15&output=embed`}
+                />
+              ) : (
+                <div style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', borderRadius: 8 }}>
+                  <Text type="secondary">Coordenadas não informadas</Text>
+                </div>
+              )}
+            </Col>
+          </Row>
+        )}
+      </Modal>
     </div>
   );
 }
