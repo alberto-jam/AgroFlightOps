@@ -34,6 +34,8 @@ export interface DataTableProps<T extends object> {
   onDataLoaded?: (data: PaginatedResponse<T>) => void;
   /** External trigger to refetch data — increment to refetch. */
   refreshKey?: number;
+  /** Row click handler. */
+  onRowClick?: (record: T) => void;
 }
 
 export default function DataTable<T extends object>({
@@ -49,6 +51,7 @@ export default function DataTable<T extends object>({
   defaultPageSize = 20,
   onDataLoaded,
   refreshKey,
+  onRowClick,
 }: DataTableProps<T>) {
   const [data, setData] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
@@ -129,6 +132,7 @@ export default function DataTable<T extends object>({
         rowKey={rowKey}
         loading={loading}
         onChange={handleTableChange}
+        onRow={onRowClick ? (record) => ({ onClick: () => onRowClick(record), style: { cursor: 'pointer' } }) : undefined}
         pagination={
           apiUrl
             ? {

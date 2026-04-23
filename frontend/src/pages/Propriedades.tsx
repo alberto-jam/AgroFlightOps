@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Button, Col, Form, Input, InputNumber, message, Popconfirm, Row, Select, Space, Typography } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Col, Descriptions, Form, Input, InputNumber, message, Modal, Popconfirm, Row, Select, Space, Typography } from 'antd';
+import { EnvironmentOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import DataTable from '../components/DataTable';
 import FormModal from '../components/FormModal';
@@ -23,6 +23,7 @@ export default function Propriedades() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [filterCliente, setFilterCliente] = useState<number | undefined>();
   const [filterAtivo, setFilterAtivo] = useState<boolean | undefined>();
+  const [viewing, setViewing] = useState<PropriedadeResponse | null>(null);
   const [clientes, setClientes] = useState<{ value: number; label: string }[]>([]);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
@@ -131,6 +132,7 @@ export default function Propriedades() {
         rowKey="id"
         extraParams={extraParams}
         refreshKey={refreshKey}
+        onRowClick={(record) => setViewing(record)}
         toolbar={
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Nova Propriedade
@@ -193,6 +195,52 @@ export default function Propriedades() {
           </Col>
         </Row>
       </FormModal>
+
+      {/* View Modal with Google Maps */}
+      <Modal
+        open={!!viewing}
+        title={<Space><EnvironmentOutlined /> {viewing?.nome}</Space>}
+        onCancel={() => setViewing(null)}
+        footer={null}
+        width={950}
+      >
+        {viewing && (
+          <Row gutter={24}>
+            <Col span={12}>
+              <Descriptions column={1} size="small" bordered>
+                <Descriptions.Item label="ID">{viewing.id}</Descriptions.Item>
+                <Descriptions.Item label="Nome">{viewing.nome}</Descriptions.Item>
+                <Descriptions.Item label="Cliente">{clienteLabel(viewing.cliente_id)}</Descriptions.Item>
+                <Descriptions.Item label="Município/UF">
+                  {[viewing.municipio, viewing.estado].filter(Boolean).join(' - ')}
+                </Descriptions.Item>
+                <Descriptions.Item label="Área Total">{viewing.area_total} ha</Descriptions.Item>
+                <Descriptions.Item label="Latitude">{viewing.latitude ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Longitude">{viewing.longitude ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Referência">{viewing.referencia_local || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Status">{viewing.ativo ? 'Ativo' : 'Inativo'}</Descriptions.Item>
+              </Descriptions>
+            </Col>
+            <Col span={12}>
+              {viewing.latitude && viewing.longitude ? (
+                <iframe
+                  title="Localização"
+                  width="100%"
+                  height="400"
+                  style={{ border: 0, borderRadius: 8 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://maps.google.com/maps?q=${viewing.latitude},${viewing.longitude}&z=15&output=embed`}
+                />
+              ) : (
+                <div style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', borderRadius: 8 }}>
+                  <Text type="secondary">Coordenadas não informadas</Text>
+                </div>
+              )}
+            </Col>
+          </Row>
+        )}
+      </Modal>
     </div>
   );
 }

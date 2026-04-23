@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { Button, Col, Form, Input, message, Popconfirm, Row, Select, Space, Typography } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Col, Descriptions, Form, Input, message, Modal, Popconfirm, Row, Select, Space, Typography } from 'antd';
+import { EnvironmentOutlined, PlusOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import DataTable from '../components/DataTable';
 import FormModal from '../components/FormModal';
@@ -22,6 +22,7 @@ export default function Clientes() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [filterNome, setFilterNome] = useState<string | undefined>();
   const [filterAtivo, setFilterAtivo] = useState<boolean | undefined>();
+  const [viewing, setViewing] = useState<ClienteResponse | null>(null);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -125,6 +126,7 @@ export default function Clientes() {
         rowKey="id"
         extraParams={extraParams}
         refreshKey={refreshKey}
+        onRowClick={(record) => setViewing(record)}
         toolbar={
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Novo Cliente
@@ -239,6 +241,58 @@ export default function Clientes() {
           <Input maxLength={255} />
         </Form.Item>
       </FormModal>
+
+      {/* View Modal with Google Maps */}
+      <Modal
+        open={!!viewing}
+        title={<Space><EnvironmentOutlined /> {viewing?.nome}</Space>}
+        onCancel={() => setViewing(null)}
+        footer={null}
+        width={950}
+      >
+        {viewing && (
+          <Row gutter={24}>
+            <Col span={12}>
+              <Descriptions column={1} size="small" bordered>
+                <Descriptions.Item label="ID">{viewing.id}</Descriptions.Item>
+                <Descriptions.Item label="Nome">{viewing.nome}</Descriptions.Item>
+                <Descriptions.Item label="CPF/CNPJ">{viewing.cpf_cnpj || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Telefone">{viewing.telefone || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Email">{viewing.email || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Endereço">
+                  {[viewing.endereco, viewing.numero].filter(Boolean).join(', ') || '—'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Bairro">{viewing.bairro || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Município/UF">
+                  {[viewing.municipio, viewing.estado].filter(Boolean).join(' - ') || '—'}
+                </Descriptions.Item>
+                <Descriptions.Item label="CEP">{viewing.cep || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Latitude">{viewing.latitude ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Longitude">{viewing.longitude ?? '—'}</Descriptions.Item>
+                <Descriptions.Item label="Referência">{viewing.referencia_local || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Status">{viewing.ativo ? 'Ativo' : 'Inativo'}</Descriptions.Item>
+              </Descriptions>
+            </Col>
+            <Col span={12}>
+              {viewing.latitude && viewing.longitude ? (
+                <iframe
+                  title="Localização"
+                  width="100%"
+                  height="400"
+                  style={{ border: 0, borderRadius: 8 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://maps.google.com/maps?q=${viewing.latitude},${viewing.longitude}&z=15&output=embed`}
+                />
+              ) : (
+                <div style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5', borderRadius: 8 }}>
+                  <Text type="secondary">Coordenadas não informadas</Text>
+                </div>
+              )}
+            </Col>
+          </Row>
+        )}
+      </Modal>
     </div>
   );
 }
