@@ -152,11 +152,18 @@ export default function Propriedades() {
             ? {
                 cliente_id: editing.cliente_id,
                 nome: editing.nome,
+                endereco: editing.endereco,
+                numero: editing.numero,
+                complemento: editing.complemento,
+                bairro: editing.bairro,
                 municipio: editing.municipio,
                 estado: editing.estado,
+                cep: editing.cep,
+                localizacao_descritiva: editing.localizacao_descritiva,
                 area_total: editing.area_total,
                 latitude: editing.latitude,
                 longitude: editing.longitude,
+                referencia_local: editing.referencia_local,
               }
             : undefined
         }
@@ -167,6 +174,35 @@ export default function Propriedades() {
         <Form.Item name="nome" label="Nome" rules={[{ required: true, message: 'Informe o nome' }]}>
           <Input maxLength={200} />
         </Form.Item>
+        <Row gutter={16}>
+          <Col span={16}>
+            <Form.Item name="endereco" label="Endereço">
+              <Input maxLength={255} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="numero" label="Número">
+              <Input maxLength={20} />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item name="complemento" label="Complemento">
+              <Input maxLength={120} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="bairro" label="Bairro">
+              <Input maxLength={120} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item name="cep" label="CEP">
+              <Input maxLength={12} />
+            </Form.Item>
+          </Col>
+        </Row>
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item name="municipio" label="Município" rules={[{ required: true, message: 'Informe o município' }]}>
@@ -179,6 +215,9 @@ export default function Propriedades() {
             </Form.Item>
           </Col>
         </Row>
+        <Form.Item name="localizacao_descritiva" label="Localização Descritiva">
+          <Input.TextArea rows={2} maxLength={2000} placeholder="Descrição de como chegar à propriedade" />
+        </Form.Item>
         <Form.Item name="area_total" label="Área Total (ha)" rules={[{ required: true, message: 'Informe a área' }]}>
           <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
         </Form.Item>
@@ -211,9 +250,16 @@ export default function Propriedades() {
                 <Descriptions.Item label="ID">{viewing.id}</Descriptions.Item>
                 <Descriptions.Item label="Nome">{viewing.nome}</Descriptions.Item>
                 <Descriptions.Item label="Cliente">{clienteLabel(viewing.cliente_id)}</Descriptions.Item>
+                <Descriptions.Item label="Endereço">
+                  {[viewing.endereco, viewing.numero].filter(Boolean).join(', ') || '—'}
+                </Descriptions.Item>
+                <Descriptions.Item label="Complemento">{viewing.complemento || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Bairro">{viewing.bairro || '—'}</Descriptions.Item>
                 <Descriptions.Item label="Município/UF">
                   {[viewing.municipio, viewing.estado].filter(Boolean).join(' - ')}
                 </Descriptions.Item>
+                <Descriptions.Item label="CEP">{viewing.cep || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Localização">{viewing.localizacao_descritiva || '—'}</Descriptions.Item>
                 <Descriptions.Item label="Área Total">{viewing.area_total} ha</Descriptions.Item>
                 <Descriptions.Item label="Latitude">{viewing.latitude ?? '—'}</Descriptions.Item>
                 <Descriptions.Item label="Longitude">{viewing.longitude ?? '—'}</Descriptions.Item>
