@@ -1,0 +1,231 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Agrotech DJI Agras Analytics MVP - S3, Lambda, Glue, Athena, Frontend Hosting
+
+Parameters:
+  Cliente:
+    Type: String
+    Default: AGROTECH
+  Projeto:
+    Type: String
+    Default: agrotech
+  Ambiente:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, hml, prd]
+  Autor:
+    Type: String
+    Default: ALBERTO MOREIRA
+  AthenaResultsBucketName:
+    Type: String
+    Default: ''
+    Description: Optional existing Athena results bucket. If empty, stack creates one.
+
+Conditions:
+  CreateAthenaResultsBucket: !Equals [!Ref AthenaResultsBucketName, '']
+
+Resources:
+  RawBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Projeto}-${Ambiente}-agras-raw'
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      Tags:
+        - Key: Cliente
+          Value: !Ref Cliente
+        - Key: Projeto
+          Value: !Ref Projeto
+        - Key: Ambiente
+          Value: !Ref Ambiente
+        - Key: Autor
+          Value: !Ref Autor
+
+  ProcessedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Projeto}-${Ambiente}-agras-processed'
+      Tags:
+        - Key: Cliente
+          Value: !Ref Cliente
+        - Key: Projeto
+          Value: !Ref Projeto
+        - Key: Ambiente
+          Value: !Ref Ambiente
+        - Key: Autor
+          Value: !Ref Autor
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Projeto}-${Ambiente}-agras-frontend'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      Tags:
+        - Key: Cliente
+          Value: !Ref Cliente
+        - Key: Projeto
+          Value: !Ref Projeto
+        - Key: Ambiente
+          Value: !Ref Ambiente
+        - Key: Autor
+          Value: !Ref Autor
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadForStaticWebsiteMvp
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+
+  AthenaResultsBucket:
+    Type: AWS::S3::Bucket
+    Condition: CreateAthenaResultsBucket
+    Properties:
+      BucketName: !Sub '${Projeto}-${Ambiente}-agras-athena-results'
+      Tags:
+        - Key: Cliente
+          Value: !Ref Cliente
+        - Key: Projeto
+          Value: !Ref Projeto
+        - Key: Ambiente
+          Value: !Ref Ambiente
+        - Key: Autor
+          Value: !Ref Autor
+
+  ProcessorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Projeto}-${Ambiente}-agras-processor-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: agras-processor-s3-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:ListBucket]
+                Resource:
+                  - !GetAtt RawBucket.Arn
+                  - !Sub '${RawBucket.Arn}/*'
+              - Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:ListBucket]
+                Resource:
+                  - !GetAtt ProcessedBucket.Arn
+                  - !Sub '${ProcessedBucket.Arn}/*'
+
+  ProcessorLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Projeto}-${Ambiente}-agras-processor'
+      Runtime: python3.13
+      Handler: processor.lambda_handler
+      Role: !GetAtt ProcessorRole.Arn
+      Timeout: 120
+      MemorySize: 512
+      Environment:
+        Variables:
+          PROCESSED_BUCKET: !Ref ProcessedBucket
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'ok': False, 'message': 'Upload real package lambda/processor/processor.py'}
+      Tags:
+        - Key: Cliente
+          Value: !Ref Cliente
+        - Key: Projeto
+          Value: !Ref Projeto
+        - Key: Ambiente
+          Value: !Ref Ambiente
+        - Key: Autor
+          Value: !Ref Autor
+
+  RawToProcessorRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub '${Projeto}-${Ambiente}-agras-raw-to-processor'
+      EventPattern:
+        source: ['aws.s3']
+        detail-type: ['Object Created']
+        detail:
+          bucket:
+            name: [!Ref RawBucket]
+          object:
+            key:
+              - prefix: incoming/
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt ProcessorLambda.Arn
+          Id: ProcessorLambdaTarget
+
+  PermissionForEventsToInvokeLambda:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ProcessorLambda
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt RawToProcessorRule.Arn
+
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub '${Projeto}_${Ambiente}_agras'
+        Description: DJI Agras telemetry analytics database
+
+  AthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: !Sub '${Projeto}-${Ambiente}-agras-wg'
+      State: ENABLED
+      WorkGroupConfiguration:
+        EnforceWorkGroupConfiguration: true
+        ResultConfiguration:
+          OutputLocation: !If
+            - CreateAthenaResultsBucket
+            - !Sub 's3://${AthenaResultsBucket}/results/'
+            - !Sub 's3://${AthenaResultsBucketName}/results/'
+      Tags:
+        - Key: Cliente
+          Value: !Ref Cliente
+        - Key: Projeto
+          Value: !Ref Projeto
+        - Key: Ambiente
+          Value: !Ref Ambiente
+        - Key: Autor
+          Value: !Ref Autor
+
+Outputs:
+  RawBucketName:
+    Value: !Ref RawBucket
+  ProcessedBucketName:
+    Value: !Ref ProcessedBucket
+  FrontendBucketName:
+    Value: !Ref FrontendBucket
+  FrontendWebsiteUrl:
+    Value: !GetAtt FrontendBucket.WebsiteURL
+  GlueDatabaseName:
+    Value: !Sub '${Projeto}_${Ambiente}_agras'
+  AthenaWorkGroupName:
+    Value: !Ref AthenaWorkGroup

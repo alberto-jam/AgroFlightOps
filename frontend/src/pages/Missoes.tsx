@@ -4,7 +4,7 @@ import {
   Row, Select, Space, Table, Tabs, Tag, TimePicker, Typography, Upload,
 } from 'antd';
 import {
-  BulbOutlined, DownOutlined, ExclamationCircleOutlined,
+  BulbOutlined, DownOutlined, ExclamationCircleOutlined, EnvironmentOutlined,
   HistoryOutlined, PlusOutlined, RocketOutlined, ThunderboltOutlined, UploadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
@@ -25,6 +25,7 @@ import type { InsumoResponse } from '../types/insumo';
 import type { MissaoBateriaResponse } from '../types/missao-bateria';
 import type { ReservaInsumoResponse, ConsumoInsumoMissaoResponse } from '../types/reserva-insumo';
 import type { EvidenciaResponse } from '../types/evidencia';
+import TelemetriaTab from '../components/TelemetriaTab';
 
 const { Title, Text } = Typography;
 
@@ -148,6 +149,9 @@ export default function Missoes() {
   const [evidUploading, setEvidUploading] = useState(false);
   const [evidLat, setEvidLat] = useState<number | null>(null);
   const [evidLng, setEvidLng] = useState<number | null>(null);
+
+  // Telemetria modal
+  const [telemetriaMissao, setTelemetriaMissao] = useState<MissaoResponse | null>(null);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -530,7 +534,7 @@ const handleAddConsumo = async (values: any) => {
       render: (s: MissaoStatus) => <StatusBadge status={s} />,
     },
     {
-      title: 'Ações', key: 'acoes', width: 480,
+      title: 'Ações', key: 'acoes', width: 560,
       render: (_, record) => (
         <Space size="small" wrap>
           <Dropdown menu={{ items: transitionMenu(record) }}>
@@ -549,6 +553,9 @@ const handleAddConsumo = async (values: any) => {
           </Button>
           <Button size="small" icon={<BulbOutlined />} onClick={() => openReservas(record)}>
             Insumos
+          </Button>
+          <Button size="small" icon={<EnvironmentOutlined />} onClick={() => setTelemetriaMissao(record)}>
+            Telemetria
           </Button>
         </Space>
       ),
@@ -1152,8 +1159,25 @@ const handleAddConsumo = async (values: any) => {
                 </>
               ),
             },
+            {
+              key: 'telemetria',
+              label: 'Telemetria',
+              children: execMissao ? <TelemetriaTab missaoId={execMissao.id} /> : null,
+            },
           ]}
         />
+      </Modal>
+
+      {/* Telemetria Modal */}
+      <Modal
+        open={!!telemetriaMissao}
+        title={`Telemetria — ${telemetriaMissao?.codigo ?? ''}`}
+        onCancel={() => setTelemetriaMissao(null)}
+        footer={null}
+        width={1000}
+        destroyOnClose
+      >
+        {telemetriaMissao && <TelemetriaTab missaoId={telemetriaMissao.id} />}
       </Modal>
     </div>
   );

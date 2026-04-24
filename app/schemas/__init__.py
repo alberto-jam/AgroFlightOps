@@ -57,6 +57,12 @@ from app.schemas.reserva_insumo import (
     ReservaInsumoResponse,
 )
 from app.schemas.talhao import TalhaoCreate, TalhaoResponse, TalhaoUpdate
+from app.schemas.telemetria import (
+    AnomaliaResponse,
+    InsightResponse,
+    TelemetriaResumoResponse,
+    TelemetriaUploadResponse,
+)
 from app.schemas.tipo_ocorrencia import (
     TipoOcorrenciaCreate,
     TipoOcorrenciaResponse,
@@ -155,4 +161,9 @@ __all__ = [
     "DocumentoOficialCreate",
     "DocumentoOficialUpdate",
     "DocumentoOficialResponse",
+    # Telemetria
+    "TelemetriaUploadResponse",
+    "TelemetriaResumoResponse",
+    "AnomaliaResponse",
+    "InsightResponse",
 ]

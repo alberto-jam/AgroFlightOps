@@ -76,6 +76,23 @@ Parameters:
     Description: Nome do autor para TAG de recursos
     Default: Alberto Moreira
 
+  TelemetriaRawBucketName:
+    Type: String
+    Description: Nome opcional do bucket S3 Raw de telemetria (se vazio, nome gerado automaticamente)
+    Default: ''
+
+  TelemetriaProcessedBucketName:
+    Type: String
+    Description: Nome opcional do bucket S3 Processed de telemetria (se vazio, nome gerado automaticamente)
+    Default: ''
+
+# =============================================================================
+# Conditions
+# =============================================================================
+Conditions:
+  HasCustomRawBucketName: !Not [!Equals [!Ref TelemetriaRawBucketName, '']]
+  HasCustomProcessedBucketName: !Not [!Equals [!Ref TelemetriaProcessedBucketName, '']]
+
 # =============================================================================
 # Globals
 # =============================================================================
@@ -117,6 +134,8 @@ Resources:
           CORS_ORIGINS: !Ref CorsOrigins
           APP_ENV: !Ref AppEnv
           DEBUG: !Ref Debug
+          TELEMETRIA_RAW_BUCKET: !Ref TelemetriaRawBucket
+          TELEMETRIA_PROCESSED_BUCKET: !Ref TelemetriaProcessedBucket
       Events:
         CatchAll:
           Type: HttpApi
@@ -197,6 +216,37 @@ Resources:
                   - ec2:CreateNetworkInterface
                   - ec2:DescribeNetworkInterfaces
                   - ec2:DeleteNetworkInterface
+                Resource: "*"
+        # Política S3 Leitura — Telemetria Processed Bucket
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-S3TelemetriaProcessedRead"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "${TelemetriaProcessedBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !GetAtt TelemetriaProcessedBucket.Arn
+        # Política S3 Escrita — Telemetria Raw Bucket (upload endpoint)
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-S3TelemetriaRawWrite"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub "${TelemetriaRawBucket.Arn}/*"
+        # Política Bedrock — Invocação de modelo para insights IA
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-BedrockInvokeModel"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
                 Resource: "*"
       Tags:
         - Key: Cliente
@@ -303,6 +353,219 @@ Resources:
               StringEquals:
                 aws:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
 
+  # ---------------------------------------------------------------------------
+  # S3 Bucket — Telemetria Raw (ingestão de arquivos brutos)
+  # ---------------------------------------------------------------------------
+  TelemetriaRawBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !If
+        - HasCustomRawBucketName
+        - !Ref TelemetriaRawBucketName
+        - !Sub "agroflightops-${Environment}-telemetria-raw"
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      Tags:
+        - Key: Cliente
+          Value: VistaAgrotech
+        - Key: Projeto
+          Value: AgroFlightOps
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Autor
+
+  # ---------------------------------------------------------------------------
+  # S3 Bucket — Telemetria Processed (dados processados particionados)
+  # ---------------------------------------------------------------------------
+  TelemetriaProcessedBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !If
+        - HasCustomProcessedBucketName
+        - !Ref TelemetriaProcessedBucketName
+        - !Sub "agroflightops-${Environment}-telemetria-processed"
+      Tags:
+        - Key: Cliente
+          Value: VistaAgrotech
+        - Key: Projeto
+          Value: AgroFlightOps
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Autor
+
+  # ---------------------------------------------------------------------------
+  # IAM Role — Lambda Processor de Telemetria (menor privilégio)
+  # ---------------------------------------------------------------------------
+  TelemetriaProcessorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "AgroFlightOps-${Environment}-TelemetriaProcessorRole"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        # Política CloudWatch Logs
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-TelemetriaProcessor-CloudWatchLogs"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*"
+        # Política S3 Read — Raw Bucket
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-TelemetriaProcessor-S3Read"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt TelemetriaRawBucket.Arn
+                  - !Sub "${TelemetriaRawBucket.Arn}/*"
+        # Política S3 Write — Processed Bucket
+        - PolicyName: !Sub "AgroFlightOps-${Environment}-TelemetriaProcessor-S3Write"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt TelemetriaProcessedBucket.Arn
+                  - !Sub "${TelemetriaProcessedBucket.Arn}/*"
+      Tags:
+        - Key: Cliente
+          Value: VistaAgrotech
+        - Key: Projeto
+          Value: AgroFlightOps
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Autor
+
+  # ---------------------------------------------------------------------------
+  # Lambda Function — Telemetria Processor (processamento de dados brutos)
+  # ---------------------------------------------------------------------------
+  TelemetriaProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: processor.lambda_handler
+      CodeUri: lambda_processor/
+      Runtime: python3.12
+      Timeout: 120
+      MemorySize: 512
+      Role: !GetAtt TelemetriaProcessorRole.Arn
+      Environment:
+        Variables:
+          PROCESSED_BUCKET: !Ref TelemetriaProcessedBucket
+      Tags:
+        Cliente: VistaAgrotech
+        Projeto: AgroFlightOps
+        Ambiente: !Ref Environment
+        Autor: !Ref Autor
+    Metadata:
+      BuildMethod: python3.12
+
+  # ---------------------------------------------------------------------------
+  # EventBridge Rule — Aciona Lambda Processor quando objeto criado no Raw Bucket
+  # ---------------------------------------------------------------------------
+  TelemetriaEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "AgroFlightOps-${Environment}-telemetria-raw-to-processor"
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !Ref TelemetriaRawBucket
+          object:
+            key:
+              - prefix: "incoming/"
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt TelemetriaProcessorFunction.Arn
+          Id: TelemetriaProcessorTarget
+
+  # ---------------------------------------------------------------------------
+  # Lambda Permission — EventBridge pode invocar o Lambda Processor
+  # ---------------------------------------------------------------------------
+  TelemetriaEventPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref TelemetriaProcessorFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt TelemetriaEventRule.Arn
+
+  # ---------------------------------------------------------------------------
+  # S3 Bucket — Athena Results (resultados de queries Athena)
+  # ---------------------------------------------------------------------------
+  TelemetriaAthenaResultsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "agroflightops-${Environment}-telemetria-athena-results"
+      Tags:
+        - Key: Cliente
+          Value: VistaAgrotech
+        - Key: Projeto
+          Value: AgroFlightOps
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Autor
+
+  # ---------------------------------------------------------------------------
+  # Glue Database — Catálogo de dados de telemetria
+  # ---------------------------------------------------------------------------
+  TelemetriaGlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: !Sub "agroflightops_${Environment}_telemetria"
+        Description: !Sub "Banco de dados Glue para telemetria de drones - ${Environment}"
+
+  # ---------------------------------------------------------------------------
+  # Athena WorkGroup — Consultas analíticas de telemetria
+  # ---------------------------------------------------------------------------
+  TelemetriaAthenaWorkGroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: !Sub "AgroFlightOps-${Environment}-telemetria"
+      State: ENABLED
+      WorkGroupConfiguration:
+        ResultConfiguration:
+          OutputLocation: !Sub "s3://${TelemetriaAthenaResultsBucket}/results/"
+        EnforceWorkGroupConfiguration: true
+        PublishCloudWatchMetricsEnabled: true
+      Tags:
+        - Key: Cliente
+          Value: VistaAgrotech
+        - Key: Projeto
+          Value: AgroFlightOps
+        - Key: Ambiente
+          Value: !Ref Environment
+        - Key: Autor
+          Value: !Ref Autor
+
 # =============================================================================
 # Outputs
 # =============================================================================
@@ -330,3 +593,45 @@ Outputs:
     Value: !Ref CloudFrontDistribution
     Export:
       Name: !Sub "AgroFlightOps-${Environment}-CloudFrontDistId"
+
+  TelemetriaRawBucketName:
+    Description: Nome do bucket S3 Raw de telemetria
+    Value: !Ref TelemetriaRawBucket
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-TelemetriaRawBucket"
+
+  TelemetriaProcessedBucketName:
+    Description: Nome do bucket S3 Processed de telemetria
+    Value: !Ref TelemetriaProcessedBucket
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-TelemetriaProcessedBucket"
+
+  TelemetriaAthenaResultsBucketName:
+    Description: Nome do bucket S3 de resultados Athena de telemetria
+    Value: !Ref TelemetriaAthenaResultsBucket
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-TelemetriaAthenaResultsBucket"
+
+  TelemetriaProcessorFunctionArn:
+    Description: ARN da Lambda Processor de telemetria
+    Value: !GetAtt TelemetriaProcessorFunction.Arn
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-TelemetriaProcessorFunctionArn"
+
+  TelemetriaProcessorRoleArn:
+    Description: ARN da IAM Role do Lambda Processor de telemetria
+    Value: !GetAtt TelemetriaProcessorRole.Arn
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-TelemetriaProcessorRoleArn"
+
+  GlueDatabaseName:
+    Description: Nome do banco de dados Glue de telemetria
+    Value: !Ref TelemetriaGlueDatabase
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-GlueDatabaseName"
+
+  AthenaWorkGroupName:
+    Description: Nome do WorkGroup Athena de telemetria
+    Value: !Ref TelemetriaAthenaWorkGroup
+    Export:
+      Name: !Sub "AgroFlightOps-${Environment}-AthenaWorkGroupName"
