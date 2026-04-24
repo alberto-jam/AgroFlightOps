@@ -205,9 +205,12 @@ const handleSubmit = async (values: any) => {
           );
           payload.latitude_operacao = prop.latitude;
           payload.longitude_operacao = prop.longitude;
-          payload.endereco_operacao = [prop.endereco, prop.numero].filter(Boolean).join(' ')
-            + (prop.municipio ? `, ${prop.municipio}` : '')
-            + (prop.estado ? ` - ${prop.estado}` : '');
+          payload.endereco_operacao = [
+            [prop.endereco, prop.numero].filter(Boolean).join(', '),
+            prop.bairro,
+            prop.municipio,
+            prop.estado,
+          ].filter(Boolean).join(' - ');
           payload.referencia_operacao = prop.referencia_local;
         } catch {
           // Non-blocking: proceed without location data
