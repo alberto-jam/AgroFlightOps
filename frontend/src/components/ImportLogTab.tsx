@@ -21,19 +21,22 @@ export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
 
   const handleSelect = (file: File) => {
     setSelecting(true);
-    // Use setTimeout to allow the UI to update before processing the large file
-    setTimeout(() => {
-      const exists = files.some((f) => f.name === file.name);
-      if (exists) {
-        message.warning(`Arquivo "${file.name}" já está na lista.`);
-      } else {
-        setFiles((prev) => [
-          ...prev,
-          { uid: `${Date.now()}-${file.name}`, name: file.name, file },
-        ]);
-      }
-      setSelecting(false);
-    }, 100);
+    // Use requestAnimationFrame to ensure the loading state renders before processing
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const exists = files.some((f) => f.name === file.name);
+        if (exists) {
+          message.warning(`Arquivo "${file.name}" já está na lista.`);
+        } else {
+          setFiles((prev) => [
+            ...prev,
+            { uid: `${Date.now()}-${file.name}`, name: file.name, file },
+          ]);
+          message.success(`Arquivo "${file.name}" carregado.`);
+        }
+        setSelecting(false);
+      });
+    });
   };
 
   const handleRemove = (uid: string) => {
