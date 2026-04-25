@@ -97,7 +97,9 @@ export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
             return false;
           }}
         >
-          <Button icon={<UploadOutlined />}>Importar Arquivo de Log</Button>
+          <Button icon={<UploadOutlined />} loading={uploading}>
+          {uploading ? 'Carregando arquivo...' : 'Importar Arquivo de Log'}
+        </Button>
         </Upload>
         <Button
           type="primary"
