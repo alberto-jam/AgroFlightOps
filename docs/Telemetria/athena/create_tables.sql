@@ -2,7 +2,7 @@
 
 CREATE EXTERNAL TABLE IF NOT EXISTS agras_telemetry_jsonl (
   flight_id string,
-  timestamp string,
+  `timestamp` string,
   drone_model string,
   drone_serial string,
   pilot_id string,
@@ -30,12 +30,13 @@ CREATE EXTERNAL TABLE IF NOT EXISTS agras_telemetry_jsonl (
 )
 PARTITIONED BY (dt string, flight_id_part string)
 ROW FORMAT SERDE 'org.openx.data.jsonserde.JsonSerDe'
-LOCATION 's3://agrotech-dev-agras-processed/telemetry/'
+LOCATION 's3://agroflightops-dev-telemetria-processed/telemetry/'
 TBLPROPERTIES (
   'projection.enabled'='true',
   'projection.dt.type'='date',
-  'projection.dt.range'='2026-01-01,NOW',
+  'projection.dt.range'='2025-01-01,NOW',
   'projection.dt.format'='yyyy-MM-dd',
   'projection.flight_id_part.type'='injected',
-  'storage.location.template'='s3://agrotech-dev-agras-processed/telemetry/dt=${dt}/flight_id=${flight_id_part}/'
-);
+  'storage.location.template'='s3://agroflightops-dev-telemetria-processed/telemetry/dt=${dt}/flight_id=${flight_id_part}/'
+)
+

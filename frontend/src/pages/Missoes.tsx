@@ -26,6 +26,7 @@ import type { MissaoBateriaResponse } from '../types/missao-bateria';
 import type { ReservaInsumoResponse, ConsumoInsumoMissaoResponse } from '../types/reserva-insumo';
 import type { EvidenciaResponse } from '../types/evidencia';
 import TelemetriaTab from '../components/TelemetriaTab';
+import ImportLogTab from '../components/ImportLogTab';
 
 const { Title, Text } = Typography;
 
@@ -1158,6 +1159,11 @@ const handleAddConsumo = async (values: any) => {
                   />
                 </>
               ),
+            },
+            {
+              key: 'importar-log',
+              label: 'Importar Log da Missão',
+              children: execMissao ? <ImportLogTab missaoId={execMissao.id} /> : null,
             },
             {
               key: 'telemetria',

@@ -2,8 +2,8 @@ CREATE OR REPLACE VIEW vw_agras_flight_summary AS
 SELECT
   flight_id,
   dt,
-  min(from_iso8601_timestamp(timestamp)) AS start_time,
-  max(from_iso8601_timestamp(timestamp)) AS end_time,
+  min(timestamp) AS start_time,
+  max(timestamp) AS end_time,
   count(*) AS telemetry_points,
   max(cumulative_distance_m) AS distance_m,
   round(avg(speed_mps), 2) AS avg_speed_mps,
