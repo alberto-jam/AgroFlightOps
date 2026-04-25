@@ -36,15 +36,17 @@ class TelemetriaService:
             data = json.loads(file_content)
         except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             raise BusinessRuleViolationError(
-                "Erro de validação nos dados enviados",
-                errors=[{"field": "file", "message": "Arquivo não é JSON válido"}],
+                "Arquivo não é JSON válido",
             ) from exc
 
-        # 2. Validate "records" field
-        if not isinstance(data.get("records"), list):
+        # 2. Accept both list and {"records": [...]} formats
+        if isinstance(data, list):
+            records = data
+        elif isinstance(data, dict) and isinstance(data.get("records"), list):
+            records = data["records"]
+        else:
             raise BusinessRuleViolationError(
-                "Erro de validação nos dados enviados",
-                errors=[{"field": "records", "message": "Campo 'records' obrigatório"}],
+                "JSON deve ser uma lista de registros ou conter o campo 'records'",
             )
 
         # 3. Build S3 key and upload
