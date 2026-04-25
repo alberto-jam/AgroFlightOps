@@ -17,17 +17,23 @@ interface FileEntry {
 export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [selecting, setSelecting] = useState(false);
 
   const handleSelect = (file: File) => {
-    const exists = files.some((f) => f.name === file.name);
-    if (exists) {
-      message.warning(`Arquivo "${file.name}" já está na lista.`);
-      return;
-    }
-    setFiles((prev) => [
-      ...prev,
-      { uid: `${Date.now()}-${file.name}`, name: file.name, file },
-    ]);
+    setSelecting(true);
+    // Use setTimeout to allow the UI to update before processing the large file
+    setTimeout(() => {
+      const exists = files.some((f) => f.name === file.name);
+      if (exists) {
+        message.warning(`Arquivo "${file.name}" já está na lista.`);
+      } else {
+        setFiles((prev) => [
+          ...prev,
+          { uid: `${Date.now()}-${file.name}`, name: file.name, file },
+        ]);
+      }
+      setSelecting(false);
+    }, 100);
   };
 
   const handleRemove = (uid: string) => {
@@ -97,8 +103,8 @@ export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
             return false;
           }}
         >
-          <Button icon={<UploadOutlined />} loading={uploading}>
-          {uploading ? 'Carregando arquivo...' : 'Importar Arquivo de Log'}
+          <Button icon={<UploadOutlined />} loading={selecting}>
+          {selecting ? 'Carregando arquivo...' : 'Importar Arquivo de Log'}
         </Button>
         </Upload>
         <Button
@@ -108,7 +114,7 @@ export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
           loading={uploading}
           disabled={!files.length}
         >
-          Salvar
+          {uploading ? 'Enviando arquivos...' : 'Salvar'}
         </Button>
       </Space>
 
