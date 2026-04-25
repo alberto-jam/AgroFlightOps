@@ -17,26 +17,21 @@ interface FileEntry {
 export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [selecting, setSelecting] = useState(false);
 
   const handleSelect = (file: File) => {
-    setSelecting(true);
-    // Use requestAnimationFrame to ensure the loading state renders before processing
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const exists = files.some((f) => f.name === file.name);
-        if (exists) {
-          message.warning(`Arquivo "${file.name}" já está na lista.`);
-        } else {
-          setFiles((prev) => [
-            ...prev,
-            { uid: `${Date.now()}-${file.name}`, name: file.name, file },
-          ]);
-          message.success(`Arquivo "${file.name}" carregado.`);
-        }
-        setSelecting(false);
-      });
-    });
+    message.loading({ content: 'Carregando arquivo...', key: 'file-loading', duration: 0 });
+    setTimeout(() => {
+      const exists = files.some((f) => f.name === file.name);
+      if (exists) {
+        message.warning({ content: `Arquivo "${file.name}" já está na lista.`, key: 'file-loading' });
+      } else {
+        setFiles((prev) => [
+          ...prev,
+          { uid: `${Date.now()}-${file.name}`, name: file.name, file },
+        ]);
+        message.success({ content: `Arquivo "${file.name}" carregado.`, key: 'file-loading' });
+      }
+    }, 50);
   };
 
   const handleRemove = (uid: string) => {
@@ -106,9 +101,7 @@ export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
             return false;
           }}
         >
-          <Button icon={<UploadOutlined />} loading={selecting}>
-          {selecting ? 'Carregando arquivo...' : 'Importar Arquivo de Log'}
-        </Button>
+          <Button icon={<UploadOutlined />}>Importar Arquivo de Log</Button>
         </Upload>
         <Button
           type="primary"
