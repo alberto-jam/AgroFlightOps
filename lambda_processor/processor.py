@@ -209,6 +209,17 @@ def lambda_handler(event, context):
         if not normalized:
             continue
 
+        # Extract missao_id from S3 key: incoming/{missao_id}_{timestamp}.json
+        missao_id = None
+        filename = key.split("/")[-1]  # e.g. "4_20260425T120000Z.json"
+        if "_" in filename:
+            missao_id = filename.split("_")[0]
+
+        # Override flight_id with missao_id if available
+        if missao_id:
+            for rec_norm in normalized:
+                rec_norm["flight_id"] = missao_id
+
         dt = normalized[0]["dt"]
         flight_id = normalized[0]["flight_id"]
 
