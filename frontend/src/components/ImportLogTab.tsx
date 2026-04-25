@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Button, message, Space, Table, Typography, Upload } from 'antd';
+import { useRef, useState } from 'react';
+import { Button, message, Space, Spin, Table, Typography } from 'antd';
 import { DeleteOutlined, UploadOutlined, SaveOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import apiClient from '../api/client';
@@ -17,21 +17,40 @@ interface FileEntry {
 export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSelect = (file: File) => {
-    message.loading({ content: 'Carregando arquivo...', key: 'file-loading', duration: 0 });
-    setTimeout(() => {
+  const handleButtonClick = () => {
+    setLoading(true);
+    message.loading({ content: 'Aguarde, selecionando arquivo...', key: 'file-load', duration: 0 });
+    // Small delay to ensure the loading state renders before the file picker opens
+    setTimeout(() => inputRef.current?.click(), 50);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) {
+      setLoading(false);
+      message.destroy('file-load');
+      return;
+    }
+    const newEntries: FileEntry[] = [];
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
       const exists = files.some((f) => f.name === file.name);
-      if (exists) {
-        message.warning({ content: `Arquivo "${file.name}" já está na lista.`, key: 'file-loading' });
-      } else {
-        setFiles((prev) => [
-          ...prev,
-          { uid: `${Date.now()}-${file.name}`, name: file.name, file },
-        ]);
-        message.success({ content: `Arquivo "${file.name}" carregado.`, key: 'file-loading' });
+      if (!exists) {
+        newEntries.push({ uid: `${Date.now()}-${file.name}`, name: file.name, file });
       }
-    }, 50);
+    }
+    if (newEntries.length > 0) {
+      setFiles((prev) => [...prev, ...newEntries]);
+      message.success({ content: `${newEntries.length} arquivo(s) carregado(s).`, key: 'file-load' });
+    } else {
+      message.warning({ content: 'Arquivo(s) já estão na lista.', key: 'file-load' });
+    }
+    setLoading(false);
+    // Reset input so the same file can be selected again
+    if (inputRef.current) inputRef.current.value = '';
   };
 
   const handleRemove = (uid: string) => {
@@ -86,42 +105,45 @@ export default function ImportLogTab({ missaoId }: ImportLogTabProps) {
   ];
 
   return (
-    <div>
-      <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-        Selecione os arquivos de log da missão (JSON) para importar ao Data Lake de telemetria.
-      </Typography.Text>
+    <Spin spinning={loading} tip="Carregando arquivo...">
+      <div>
+        <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+          Selecione os arquivos de log da missão (JSON) para importar ao Data Lake de telemetria.
+        </Typography.Text>
 
-      <Space style={{ marginBottom: 16 }}>
-        <Upload
+        <input
+          ref={inputRef}
+          type="file"
           accept=".json"
           multiple
-          showUploadList={false}
-          beforeUpload={(file) => {
-            handleSelect(file);
-            return false;
-          }}
-        >
-          <Button icon={<UploadOutlined />}>Importar Arquivo de Log</Button>
-        </Upload>
-        <Button
-          type="primary"
-          icon={<SaveOutlined />}
-          onClick={handleSave}
-          loading={uploading}
-          disabled={!files.length}
-        >
-          {uploading ? 'Enviando arquivos...' : 'Salvar'}
-        </Button>
-      </Space>
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
 
-      <Table<FileEntry>
-        columns={columns}
-        dataSource={files}
-        rowKey="uid"
-        pagination={false}
-        size="small"
-        locale={{ emptyText: 'Nenhum arquivo selecionado' }}
-      />
-    </div>
+        <Space style={{ marginBottom: 16 }}>
+          <Button icon={<UploadOutlined />} onClick={handleButtonClick} loading={loading}>
+            {loading ? 'Carregando arquivo...' : 'Importar Arquivo de Log'}
+          </Button>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            onClick={handleSave}
+            loading={uploading}
+            disabled={!files.length}
+          >
+            {uploading ? 'Enviando arquivos...' : 'Salvar'}
+          </Button>
+        </Space>
+
+        <Table<FileEntry>
+          columns={columns}
+          dataSource={files}
+          rowKey="uid"
+          pagination={false}
+          size="small"
+          locale={{ emptyText: 'Nenhum arquivo selecionado' }}
+        />
+      </div>
+    </Spin>
   );
 }
