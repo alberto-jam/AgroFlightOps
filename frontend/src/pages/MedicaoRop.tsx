@@ -66,7 +66,7 @@ export default function MedicaoRop() {
     const loadClientes = async () => {
       setLoadingClientes(true);
       try {
-        const { data } = await apiClient.get('/clientes', { params: { page_size: 1000 } });
+        const { data } = await apiClient.get('/clientes', { params: { page_size: 100 } });
         setClientes(data.items || data);
       } catch {
         message.error('Erro ao carregar clientes');
@@ -86,7 +86,7 @@ export default function MedicaoRop() {
     setLoadingPropriedades(true);
     try {
       const { data } = await apiClient.get('/propriedades', {
-        params: { cliente_id: clienteId, page_size: 1000 },
+        params: { cliente_id: clienteId, page_size: 100 },
       });
       setPropriedades(data.items || data);
     } catch {
