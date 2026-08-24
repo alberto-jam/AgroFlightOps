@@ -92,6 +92,9 @@ class BateriaService:
         if data.observacoes is not None:
             kwargs["observacoes"] = data.observacoes
 
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
+
         result = await self.repo.update(bateria_id, **kwargs)
         if usuario_id is not None:
             await self.auditoria.registrar(

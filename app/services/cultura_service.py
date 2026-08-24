@@ -76,6 +76,9 @@ class CulturaService:
         if data.descricao is not None:
             kwargs["descricao"] = data.descricao
 
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
+
         result = await self.repo.update(cultura_id, **kwargs)
         if usuario_id is not None:
             await self.auditoria.registrar(

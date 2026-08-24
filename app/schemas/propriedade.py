@@ -41,6 +41,7 @@ class PropriedadeUpdate(BaseModel):
     latitude: Decimal | None = Field(None, ge=-90, le=90)
     longitude: Decimal | None = Field(None, ge=-180, le=180)
     area_total: Decimal | None = Field(None, ge=0)
+    ativo: bool | None = None
 
 
 class PropriedadeResponse(PropriedadeBase):

@@ -114,6 +114,9 @@ class ClienteService:
         if data.referencia_local is not None:
             kwargs["referencia_local"] = data.referencia_local
 
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
+
         result = await self.repo.update(cliente_id, **kwargs)
         if usuario_id is not None:
             await self.auditoria.registrar(

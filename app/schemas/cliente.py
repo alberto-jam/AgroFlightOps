@@ -42,6 +42,7 @@ class ClienteUpdate(BaseModel):
     latitude: Decimal | None = Field(None, ge=-90, le=90)
     longitude: Decimal | None = Field(None, ge=-180, le=180)
     referencia_local: str | None = Field(None, max_length=255)
+    ativo: bool | None = None
 
 
 class ClienteResponse(ClienteBase):

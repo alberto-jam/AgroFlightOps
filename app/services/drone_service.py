@@ -104,6 +104,9 @@ class DroneService:
                     )
             kwargs["status"] = data.status.value
 
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
+
         result = await self.repo.update(drone_id, **kwargs)
         if usuario_id is not None:
             await self.auditoria.registrar(

@@ -21,6 +21,7 @@ class ItemChecklistPadraoUpdate(BaseModel):
     descricao: str | None = None
     obrigatorio: bool | None = None
     ordem_exibicao: int | None = Field(None, ge=0)
+    ativo: bool | None = None
 
 
 class ItemChecklistPadraoResponse(ItemChecklistPadraoBase):

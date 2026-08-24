@@ -17,6 +17,7 @@ class CulturaCreate(CulturaBase):
 class CulturaUpdate(BaseModel):
     nome: str | None = Field(None, max_length=120)
     descricao: str | None = None
+    ativo: bool | None = None
 
 
 class CulturaResponse(CulturaBase):

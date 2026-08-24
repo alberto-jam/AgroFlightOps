@@ -17,6 +17,7 @@ class TipoOcorrenciaCreate(TipoOcorrenciaBase):
 class TipoOcorrenciaUpdate(BaseModel):
     nome: str | None = Field(None, max_length=120)
     descricao: str | None = None
+    ativo: bool | None = None
 
 
 class TipoOcorrenciaResponse(TipoOcorrenciaBase):

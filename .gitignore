@@ -34,6 +34,9 @@ node_modules/
 .pytest_cache/
 .hypothesis/
 
+# --- Arquivos de drone (logs brutos, binários, RAR) ---
+arquivos_drone/
+
 # --- OS ---
 .DS_Store
 Thumbs.db

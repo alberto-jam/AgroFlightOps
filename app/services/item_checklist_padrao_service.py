@@ -59,6 +59,8 @@ class ItemChecklistPadraoService:
             kwargs["obrigatorio"] = data.obrigatorio
         if data.ordem_exibicao is not None:
             kwargs["ordem_exibicao"] = data.ordem_exibicao
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
         result = await self.repo.update(item_id, **kwargs)
         if usuario_id:
             await self.auditoria.registrar(

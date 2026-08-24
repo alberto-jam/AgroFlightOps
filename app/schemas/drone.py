@@ -26,6 +26,7 @@ class DroneUpdate(BaseModel):
     fabricante: str | None = Field(None, max_length=120)
     capacidade_litros: Decimal | None = Field(None, ge=0)
     status: DroneStatus | None = None
+    ativo: bool | None = None
 
 
 class DroneResponse(DroneBase):

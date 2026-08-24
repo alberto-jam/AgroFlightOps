@@ -20,6 +20,7 @@ class UsuarioUpdate(BaseModel):
     email: EmailStr | None = Field(None, max_length=255)
     perfil_id: int | None = None
     senha: str | None = Field(None, min_length=6)
+    ativo: bool | None = None
 
 
 class UsuarioResponse(BaseModel):

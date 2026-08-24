@@ -23,6 +23,7 @@ class BateriaUpdate(BaseModel):
     drone_id: int | None = None
     status: BateriaStatus | None = None
     observacoes: str | None = None
+    ativo: bool | None = None
 
 
 class BateriaResponse(BateriaBase):

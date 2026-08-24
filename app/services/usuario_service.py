@@ -88,6 +88,9 @@ class UsuarioService:
         if data.senha is not None:
             kwargs["senha_hash"] = hash_password(data.senha)
 
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
+
         result = await self.repo.update(usuario_id, **kwargs)
         if current_user_id is not None:
             await self.auditoria.registrar(

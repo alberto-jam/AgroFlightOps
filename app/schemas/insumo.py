@@ -26,6 +26,7 @@ class InsumoUpdate(BaseModel):
     saldo_atual: Decimal | None = Field(None, ge=0)
     lote: str | None = Field(None, max_length=100)
     validade: date | None = None
+    ativo: bool | None = None
 
 
 class InsumoResponse(InsumoBase):

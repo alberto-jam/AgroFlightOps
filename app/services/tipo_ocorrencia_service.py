@@ -49,6 +49,8 @@ class TipoOcorrenciaService:
             kwargs["nome"] = data.nome
         if data.descricao is not None:
             kwargs["descricao"] = data.descricao
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
         result = await self.repo.update(tipo_id, **kwargs)
         if usuario_id:
             await self.auditoria.registrar(

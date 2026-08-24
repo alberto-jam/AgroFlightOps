@@ -133,6 +133,9 @@ class PropriedadeService:
         if data.area_total is not None:
             kwargs["area_total"] = data.area_total
 
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
+
         result = await self.repo.update(propriedade_id, **kwargs)
         if usuario_id is not None:
             await self.auditoria.registrar(

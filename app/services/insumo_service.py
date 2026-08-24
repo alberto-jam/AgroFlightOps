@@ -95,6 +95,9 @@ class InsumoService:
         if data.validade is not None:
             kwargs["validade"] = data.validade
 
+        if data.ativo is not None:
+            kwargs["ativo"] = data.ativo
+
         result = await self.repo.update(insumo_id, **kwargs)
         if usuario_id is not None:
             await self.auditoria.registrar(
