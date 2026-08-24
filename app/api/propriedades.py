@@ -19,7 +19,7 @@ from app.services.propriedade_service import PropriedadeService
 router = APIRouter(
     prefix="/propriedades",
     tags=["Propriedades"],
-    dependencies=[Depends(require_perfil("ADMINISTRADOR", "COORDENADOR_OPERACIONAL"))],
+    dependencies=[Depends(require_perfil("ADMINISTRADOR", "COORDENADOR_OPERACIONAL", "FINANCEIRO"))],
 )
 
 

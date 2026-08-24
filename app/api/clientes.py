@@ -15,7 +15,7 @@ from app.services.cliente_service import ClienteService
 router = APIRouter(
     prefix="/clientes",
     tags=["Clientes"],
-    dependencies=[Depends(require_perfil("ADMINISTRADOR", "COORDENADOR_OPERACIONAL"))],
+    dependencies=[Depends(require_perfil("ADMINISTRADOR", "COORDENADOR_OPERACIONAL", "FINANCEIRO"))],
 )
 
 
