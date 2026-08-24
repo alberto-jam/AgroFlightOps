@@ -9,7 +9,7 @@ request with a validation error identifying the missing fields.
 """
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import HealthCheck, given, settings, strategies as st
 
 # All three required fields for the endpoint
 REQUIRED_FIELDS = {
@@ -27,7 +27,7 @@ def _non_empty_subsets(items: list) -> st.SearchStrategy:
 
 
 @pytest.mark.asyncio
-@settings(max_examples=100)
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(fields_to_omit=_non_empty_subsets(list(REQUIRED_FIELDS.keys())))
 async def test_property_2_required_field_validation(
     fields_to_omit: list[str], async_client, admin_token
