@@ -1147,8 +1147,8 @@ const handleAddConsumo = async (values: any) => {
                     columns={[
                       { title: 'Arquivo', dataIndex: 'nome_arquivo', key: 'nome_arquivo' },
                       { title: 'Tipo', dataIndex: 'tipo_arquivo', key: 'tipo_arquivo', width: 100, render: (v: string | null) => v || '—' },
-                      { title: 'Latitude', dataIndex: 'latitude', key: 'latitude', width: 110, render: (v: number | null) => v != null ? v.toFixed(6) : '—' },
-                      { title: 'Longitude', dataIndex: 'longitude', key: 'longitude', width: 110, render: (v: number | null) => v != null ? v.toFixed(6) : '—' },
+                      { title: 'Latitude', dataIndex: 'latitude', key: 'latitude', width: 110, render: (v: number | string | null) => v != null ? Number(v).toFixed(6) : '—' },
+                      { title: 'Longitude', dataIndex: 'longitude', key: 'longitude', width: 110, render: (v: number | string | null) => v != null ? Number(v).toFixed(6) : '—' },
                       { title: 'Data', dataIndex: 'created_at', key: 'created_at', width: 150, render: (d: string) => dayjs(d).format('DD/MM/YYYY HH:mm') },
                     ]}
                     dataSource={evidenciasList}

@@ -75,11 +75,11 @@ export default function Evidencias() {
     { title: 'Tipo', dataIndex: 'tipo_arquivo', key: 'tipo_arquivo', width: 120, render: (v: string | null) => v || '—' },
     {
       title: 'Latitude', dataIndex: 'latitude', key: 'latitude', width: 120,
-      render: (v: number | null) => v != null ? v.toFixed(6) : '—',
+      render: (v: number | string | null) => v != null ? Number(v).toFixed(6) : '—',
     },
     {
       title: 'Longitude', dataIndex: 'longitude', key: 'longitude', width: 120,
-      render: (v: number | null) => v != null ? v.toFixed(6) : '—',
+      render: (v: number | string | null) => v != null ? Number(v).toFixed(6) : '—',
     },
     {
       title: 'Enviada em', dataIndex: 'created_at', key: 'created_at', width: 170,
