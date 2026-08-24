@@ -23,6 +23,7 @@ import Manutencoes from './pages/Manutencoes';
 import Documentos from './pages/Documentos';
 import Financeiro from './pages/Financeiro';
 import Relatorios from './pages/Relatorios';
+import MedicaoRop from './pages/MedicaoRop';
 import Auditoria from './pages/Auditoria';
 import Ocorrencias from './pages/Ocorrencias';
 import Evidencias from './pages/Evidencias';
@@ -67,6 +68,7 @@ export default function App() {
 
                 {/* Financeiro */}
                 <Route path="/financeiro" element={<Financeiro />} />
+                <Route path="/medicao-rop" element={<MedicaoRop />} />
                 <Route path="/relatorios" element={<Relatorios />} />
 
                 {/* Sistema — Administrador only */}

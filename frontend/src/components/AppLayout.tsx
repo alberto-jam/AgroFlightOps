@@ -222,6 +222,13 @@ const menuGroups: MenuGroup[] = [
         allowedPerfis: ['ADMINISTRADOR', 'FINANCEIRO'],
       },
       {
+        key: 'medicao-rop',
+        icon: <BarChartOutlined />,
+        label: 'Medição ROP',
+        path: '/medicao-rop',
+        allowedPerfis: ['ADMINISTRADOR', 'FINANCEIRO'],
+      },
+      {
         key: 'relatorios',
         icon: <BarChartOutlined />,
         label: 'Relatórios',
