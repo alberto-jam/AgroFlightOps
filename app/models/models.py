@@ -497,6 +497,7 @@ class Missao(Base):
     finalizado_em: Mapped[datetime | None] = mapped_column(DateTime)
     encerrado_tecnicamente_em: Mapped[datetime | None] = mapped_column(DateTime)
     encerrado_financeiramente_em: Mapped[datetime | None] = mapped_column(DateTime)
+    medicao_enviada_em: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )
