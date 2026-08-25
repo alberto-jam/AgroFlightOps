@@ -10,7 +10,14 @@ from app.core.database import get_db
 from app.core.dependencies import require_perfil
 from app.schemas.base import PaginatedResponse
 from app.schemas.medicao_rop import MedicaoRopMissaoResponse
+from app.schemas.relatorio_medicao_rop import (
+    GerarRelatorioMedicaoRequest,
+    RelatorioMedicaoGeradoResponse,
+    RelatorioMedicaoPreviewRequest,
+    RelatorioMedicaoPreviewResponse,
+)
 from app.services.medicao_rop_service import MedicaoRopService
+from app.services.relatorio_medicao_rop_service import RelatorioMedicaoRopService
 
 router = APIRouter(
     prefix="/medicoes-rop",
@@ -45,4 +52,32 @@ async def list_missoes_medicao_rop(
         page=result.page,
         page_size=result.page_size,
         pages=result.pages,
+    )
+
+
+@router.post("/preview", response_model=RelatorioMedicaoPreviewResponse)
+async def preview_relatorio_medicao(
+    body: RelatorioMedicaoPreviewRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> RelatorioMedicaoPreviewResponse:
+    """Retorna dados formatados para preview do relatório de medição."""
+    service = RelatorioMedicaoRopService(db)
+    return await service.get_preview_data(
+        missao_ids=body.missao_ids,
+        cliente_id=body.cliente_id,
+    )
+
+
+@router.post("/gerar-relatorio", response_model=RelatorioMedicaoGeradoResponse)
+async def gerar_relatorio_medicao(
+    body: GerarRelatorioMedicaoRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> RelatorioMedicaoGeradoResponse:
+    """Gera PDF do relatório, salva no S3 e marca missões como enviadas."""
+    service = RelatorioMedicaoRopService(db)
+    return await service.gerar_relatorio(
+        missao_ids=body.missao_ids,
+        cliente_id=body.cliente_id,
+        data_inicial=body.data_inicial,
+        data_final=body.data_final,
     )

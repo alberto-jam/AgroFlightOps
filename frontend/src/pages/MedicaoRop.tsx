@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Button, Col, DatePicker, Form, message, Row, Select, Space, Table, Typography, Tag,
 } from 'antd';
-import { DollarOutlined, SearchOutlined } from '@ant-design/icons';
+import { DollarOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import apiClient from '../api/client';
@@ -39,6 +40,7 @@ interface PaginatedResponse {
 }
 
 export default function MedicaoRop() {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<MedicaoRopMissao[]>([]);
@@ -255,6 +257,26 @@ export default function MedicaoRop() {
           </Typography.Text>
         </Space>
       )}
+
+      <Space style={{ marginBottom: 16 }}>
+        <Button
+          type="primary"
+          icon={<FilePdfOutlined />}
+          disabled={selectedRowKeys.length === 0}
+          onClick={() => {
+            navigate('/medicao-rop/preview', {
+              state: {
+                missao_ids: selectedRowKeys.map((key) => Number(key)),
+                cliente_id: currentFilters?.cliente_id,
+                data_inicial: currentFilters?.data_inicial,
+                data_final: currentFilters?.data_final,
+              },
+            });
+          }}
+        >
+          Gerar Relatório
+        </Button>
+      </Space>
 
       <Table
         rowKey="id"

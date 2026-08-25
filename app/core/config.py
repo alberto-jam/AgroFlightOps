@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     # AWS S3
     S3_BUCKET: str = "agroflightops-docs-dev"
+    S3_DOCUMENTS_BUCKET: str = "vistaagrotech-dev-documents"
     S3_REGION: str = "us-east-1"
     S3_PRESIGNED_URL_EXPIRATION: int = 3600
 
