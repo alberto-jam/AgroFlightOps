@@ -9,6 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import require_perfil
 from app.schemas.base import PaginatedResponse
+from app.schemas.gestao_relatorios_medicao import (
+    EnviarRelatorioRequest,
+    EnviarRelatorioResponse,
+    ExcluirRelatorioResponse,
+    RelatorioDownloadResponse,
+    RelatorioMedicaoListItem,
+)
 from app.schemas.medicao_rop import MedicaoRopMissaoResponse
 from app.schemas.relatorio_medicao_rop import (
     GerarRelatorioMedicaoRequest,
@@ -16,6 +23,7 @@ from app.schemas.relatorio_medicao_rop import (
     RelatorioMedicaoPreviewRequest,
     RelatorioMedicaoPreviewResponse,
 )
+from app.services.gestao_relatorios_medicao_service import GestaoRelatoriosMedicaoService
 from app.services.medicao_rop_service import MedicaoRopService
 from app.services.relatorio_medicao_rop_service import RelatorioMedicaoRopService
 
@@ -81,3 +89,92 @@ async def gerar_relatorio_medicao(
         data_inicial=body.data_inicial,
         data_final=body.data_final,
     )
+
+
+
+# ============================================================================
+# Gestão de Relatórios de Medição — endpoints
+# ============================================================================
+
+
+@router.get("/relatorios", response_model=PaginatedResponse[RelatorioMedicaoListItem])
+async def listar_relatorios(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    cliente_id: int | None = Query(None, description="Filtrar por cliente"),
+    data_inicial: date | None = Query(None, description="Filtrar por data_inicial >= valor"),
+    data_final: date | None = Query(None, description="Filtrar por data_final <= valor"),
+    status: str | None = Query(None, description="Filtrar por status (ATIVO ou EXCLUIDO)"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    """List generated reports with filters and pagination."""
+    service = GestaoRelatoriosMedicaoService(db)
+    # Default to ATIVO when status not specified
+    effective_status = status if status is not None else "ATIVO"
+    result = await service.listar_relatorios(
+        cliente_id=cliente_id,
+        data_inicial=data_inicial,
+        data_final=data_final,
+        status=effective_status,
+        page=page,
+        page_size=page_size,
+    )
+    items = [
+        RelatorioMedicaoListItem(
+            id=r.id,
+            cliente_nome=r.cliente.nome,
+            data_inicial=r.data_inicial,
+            data_final=r.data_final,
+            total_area=r.total_area,
+            qtd_missoes=r.qtd_missoes,
+            gerado_em=r.gerado_em,
+            status=r.status,
+            enviado_em=r.enviado_em,
+        )
+        for r in result.items
+    ]
+    return PaginatedResponse(
+        items=items,
+        total=result.total,
+        page=result.page,
+        page_size=result.page_size,
+        pages=result.pages,
+    )
+
+
+@router.get("/relatorios/{relatorio_id}/download", response_model=RelatorioDownloadResponse)
+async def download_relatorio(
+    relatorio_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Generate a presigned URL to download a report PDF."""
+    service = GestaoRelatoriosMedicaoService(db)
+    url = await service.download_relatorio(relatorio_id)
+    return RelatorioDownloadResponse(download_url=url)
+
+
+@router.delete("/relatorios/{relatorio_id}", response_model=ExcluirRelatorioResponse)
+async def excluir_relatorio(
+    relatorio_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Soft-delete a report: marks as EXCLUIDO, clears missions, removes S3 file."""
+    service = GestaoRelatoriosMedicaoService(db)
+    await service.excluir_relatorio(relatorio_id)
+    return ExcluirRelatorioResponse(mensagem="Relatório excluído com sucesso")
+
+
+@router.post("/relatorios/{relatorio_id}/enviar", response_model=EnviarRelatorioResponse)
+async def enviar_relatorio(
+    relatorio_id: int,
+    body: EnviarRelatorioRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Send report download link to specified email addresses via SES."""
+    service = GestaoRelatoriosMedicaoService(db)
+    await service.enviar_relatorio(
+        relatorio_id=relatorio_id,
+        emails=body.emails,
+        mensagem=body.mensagem,
+    )
+    return EnviarRelatorioResponse(mensagem="Relatório enviado com sucesso")
