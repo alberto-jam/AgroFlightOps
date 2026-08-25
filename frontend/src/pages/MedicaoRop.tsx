@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Button, Col, DatePicker, Form, message, Row, Select, Space, Table, Typography, Tag,
+  Button, Col, DatePicker, Form, message, Row, Select, Space, Table, Tabs, Typography, Tag,
 } from 'antd';
-import { DollarOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons';
+import { DollarOutlined, FilePdfOutlined, FileTextOutlined, SearchOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import apiClient from '../api/client';
+import RelatoriosGeradosTab from '../components/RelatoriosGeradosTab';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -201,6 +202,92 @@ export default function MedicaoRop() {
         <DollarOutlined /> Medição ROP
       </Title>
 
+      <Tabs
+        defaultActiveKey="medicao"
+        items={[
+          {
+            key: 'medicao',
+            label: (
+              <span><FilePdfOutlined /> Medição</span>
+            ),
+            children: (
+              <MedicaoTabContent
+                form={form}
+                loading={loading}
+                data={data}
+                total={total}
+                page={page}
+                pageSize={pageSize}
+                selectedRowKeys={selectedRowKeys}
+                setSelectedRowKeys={setSelectedRowKeys}
+                clientes={clientes}
+                propriedades={propriedades}
+                loadingClientes={loadingClientes}
+                loadingPropriedades={loadingPropriedades}
+                handleClienteChange={handleClienteChange}
+                handleSearch={handleSearch}
+                handlePageChange={handlePageChange}
+                columns={columns}
+                currentFilters={currentFilters}
+                navigate={navigate}
+              />
+            ),
+          },
+          {
+            key: 'relatorios',
+            label: (
+              <span><FileTextOutlined /> Relatórios Gerados</span>
+            ),
+            children: <RelatoriosGeradosTab />,
+          },
+        ]}
+      />
+    </div>
+  );
+}
+
+// Extracted the original Medição content to a sub-component for clean Tabs structure
+function MedicaoTabContent({
+  form,
+  loading,
+  data,
+  total,
+  page,
+  pageSize,
+  selectedRowKeys,
+  setSelectedRowKeys,
+  clientes,
+  propriedades,
+  loadingClientes,
+  loadingPropriedades,
+  handleClienteChange,
+  handleSearch,
+  handlePageChange,
+  columns,
+  currentFilters,
+  navigate,
+}: {
+  form: ReturnType<typeof Form.useForm>[0];
+  loading: boolean;
+  data: MedicaoRopMissao[];
+  total: number;
+  page: number;
+  pageSize: number;
+  selectedRowKeys: React.Key[];
+  setSelectedRowKeys: (keys: React.Key[]) => void;
+  clientes: ClienteOption[];
+  propriedades: PropriedadeOption[];
+  loadingClientes: boolean;
+  loadingPropriedades: boolean;
+  handleClienteChange: (clienteId: number) => void;
+  handleSearch: () => void;
+  handlePageChange: (page: number, pageSize: number) => void;
+  columns: ColumnsType<MedicaoRopMissao>;
+  currentFilters: { cliente_id: number; data_inicial: string; data_final: string; propriedade_id?: number } | null;
+  navigate: (path: string, options?: { state?: unknown }) => void;
+}) {
+  return (
+    <div>
       <Form form={form} layout="vertical" style={{ marginBottom: 24 }}>
         <Row gutter={16}>
           <Col xs={24} sm={12} md={6}>
