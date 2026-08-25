@@ -38,3 +38,4 @@ class GerarRelatorioMedicaoRequest(BaseModel):
 class RelatorioMedicaoGeradoResponse(BaseModel):
     s3_key: str
     mensagem: str
+    relatorio_id: int | None = None

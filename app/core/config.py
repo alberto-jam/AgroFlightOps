@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     S3_DOCUMENTS_BUCKET: str = "vistaagrotech-dev-documents"
     S3_REGION: str = "us-east-1"
     S3_PRESIGNED_URL_EXPIRATION: int = 3600
+    S3_PRESIGNED_URL_EMAIL_EXPIRATION: int = 259200  # 72 hours in seconds
+
+    # Amazon SES
+    SES_SENDER_EMAIL: str = "noreply@vistaagrotech.com.br"
+    SES_REGION: str = "us-east-1"
 
     # CORS
     CORS_ORIGINS: str = "*"

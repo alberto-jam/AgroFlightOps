@@ -111,6 +111,9 @@ class Cliente(Base):
     ordens_servico: Mapped[list["OrdemServico"]] = relationship(
         back_populates="cliente"
     )
+    relatorios_medicao: Mapped[list["RelatorioMedicao"]] = relationship(
+        back_populates="cliente"
+    )
 
 
 class Propriedade(Base):
@@ -995,3 +998,70 @@ class DocumentoOficial(Base):
 
     # Relationships
     enviador: Mapped["Usuario | None"] = relationship()
+
+
+# ============================================================================
+# RELATÓRIOS DE MEDIÇÃO
+# ============================================================================
+
+
+class RelatorioMedicao(Base):
+    __tablename__ = "relatorios_medicao"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    cliente_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("clientes.id"), nullable=False
+    )
+    s3_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    data_inicial: Mapped[date] = mapped_column(Date, nullable=False)
+    data_final: Mapped[date] = mapped_column(Date, nullable=False)
+    total_area: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
+    qtd_missoes: Mapped[int] = mapped_column(Integer, nullable=False)
+    gerado_em: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    gerado_por: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("usuarios.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="ATIVO")
+    enviado_em: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    enviado_para: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('ATIVO','EXCLUIDO')", name="ck_relatorios_medicao_status"
+        ),
+        CheckConstraint("total_area >= 0", name="ck_relatorios_medicao_total_area"),
+        CheckConstraint("qtd_missoes > 0", name="ck_relatorios_medicao_qtd_missoes"),
+    )
+
+    # Relationships
+    cliente: Mapped["Cliente"] = relationship(back_populates="relatorios_medicao")
+    gerador: Mapped["Usuario"] = relationship(foreign_keys=[gerado_por])
+    missoes_rel: Mapped[list["RelatorioMedicaoMissao"]] = relationship(
+        back_populates="relatorio", cascade="all, delete-orphan"
+    )
+
+
+class RelatorioMedicaoMissao(Base):
+    __tablename__ = "relatorio_medicao_missoes"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    relatorio_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("relatorios_medicao.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    missao_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("missoes.id"), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "relatorio_id", "missao_id", name="uq_relatorio_medicao_missoes"
+        ),
+    )
+
+    # Relationships
+    relatorio: Mapped["RelatorioMedicao"] = relationship(back_populates="missoes_rel")
+    missao: Mapped["Missao"] = relationship()
