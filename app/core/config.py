@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     S3_PRESIGNED_URL_EMAIL_EXPIRATION: int = 259200  # 72 hours in seconds
 
     # Amazon SES
-    SES_SENDER_EMAIL: str = "noreply@vistaagrotech.com.br"
+    SES_SENDER_EMAIL: str = "alberto.moreira@forceoneit.com"
     SES_REGION: str = "us-east-1"
 
     # CORS
