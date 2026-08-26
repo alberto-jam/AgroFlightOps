@@ -3,6 +3,7 @@ import type { PaginatedResponse } from '../types/common';
 import type {
   EnviarRelatorioRequest,
   EnviarRelatorioResponse,
+  ExcluirRelatorioParams,
   ExcluirRelatorioResponse,
   RelatorioDownloadResponse,
   RelatorioMedicaoListItem,
@@ -34,9 +35,13 @@ export async function downloadRelatorio(id: number): Promise<RelatorioDownloadRe
   return data;
 }
 
-export async function excluirRelatorio(id: number): Promise<ExcluirRelatorioResponse> {
+export async function excluirRelatorio(
+  id: number,
+  params?: ExcluirRelatorioParams,
+): Promise<ExcluirRelatorioResponse> {
   const { data } = await apiClient.delete<ExcluirRelatorioResponse>(
     `/medicoes-rop/relatorios/${id}`,
+    { data: params },
   );
   return data;
 }

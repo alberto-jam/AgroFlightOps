@@ -153,13 +153,25 @@ export default function RelatoriosGeradosTab() {
       render: (val: string) => dayjs(val).format('DD/MM/YYYY HH:mm'),
     },
     {
+      title: 'Enviado em',
+      dataIndex: 'enviado_em',
+      key: 'enviado_em',
+      width: 160,
+      render: (val: string | null) => val ? dayjs(val).format('DD/MM/YYYY HH:mm') : '-',
+    },
+    {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (val: string) => (
-        <Tag color={val === 'ATIVO' ? 'green' : 'red'}>{val}</Tag>
-      ),
+      render: (val: string) => {
+        const colorMap: Record<string, string> = {
+          'ATIVO': 'green',
+          'ENVIADO': 'blue',
+          'EXCLUIDO': 'red',
+        };
+        return <Tag color={colorMap[val] || 'default'}>{val}</Tag>;
+      },
     },
     {
       title: 'Ações',
@@ -172,7 +184,7 @@ export default function RelatoriosGeradosTab() {
             size="small"
             icon={<DownloadOutlined />}
             onClick={() => handleDownload(record)}
-            disabled={record.status !== 'ATIVO'}
+            disabled={record.status === 'EXCLUIDO'}
             title="Download"
           />
           <Button
@@ -189,7 +201,7 @@ export default function RelatoriosGeradosTab() {
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleExcluirClick(record)}
-            disabled={record.status !== 'ATIVO'}
+            disabled={record.status === 'EXCLUIDO'}
             title="Excluir"
           />
         </Space>
@@ -226,6 +238,7 @@ export default function RelatoriosGeradosTab() {
                 allowClear
                 options={[
                   { value: 'ATIVO', label: 'Ativo' },
+                  { value: 'ENVIADO', label: 'Enviado' },
                   { value: 'EXCLUIDO', label: 'Excluído' },
                 ]}
                 style={{ width: '100%' }}

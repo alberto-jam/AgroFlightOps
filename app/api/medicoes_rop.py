@@ -13,6 +13,7 @@ from app.schemas.base import PaginatedResponse
 from app.schemas.gestao_relatorios_medicao import (
     EnviarRelatorioRequest,
     EnviarRelatorioResponse,
+    ExcluirRelatorioRequest,
     ExcluirRelatorioResponse,
     RelatorioDownloadResponse,
     RelatorioMedicaoListItem,
@@ -106,19 +107,17 @@ async def listar_relatorios(
     cliente_id: int | None = Query(None, description="Filtrar por cliente"),
     data_inicial: date | None = Query(None, description="Filtrar por data_inicial >= valor"),
     data_final: date | None = Query(None, description="Filtrar por data_final <= valor"),
-    status: str | None = Query(None, description="Filtrar por status (ATIVO ou EXCLUIDO)"),
+    status: str | None = Query(None, description="Filtrar por status (ATIVO, ENVIADO ou EXCLUIDO). Se não informado, retorna ATIVO e ENVIADO"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
     """List generated reports with filters and pagination."""
     service = GestaoRelatoriosMedicaoService(db)
-    # Default to ATIVO when status not specified
-    effective_status = status if status is not None else "ATIVO"
     result = await service.listar_relatorios(
         cliente_id=cliente_id,
         data_inicial=data_inicial,
         data_final=data_final,
-        status=effective_status,
+        status=status,
         page=page,
         page_size=page_size,
     )
@@ -133,6 +132,7 @@ async def listar_relatorios(
             gerado_em=r.gerado_em,
             status=r.status,
             enviado_em=r.enviado_em,
+            enviado_para=r.enviado_para,
         )
         for r in result.items
     ]
@@ -160,10 +160,17 @@ async def download_relatorio(
 async def excluir_relatorio(
     relatorio_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(require_perfil("ADMINISTRADOR", "FINANCEIRO"))],
+    body: ExcluirRelatorioRequest | None = None,
 ):
-    """Soft-delete a report: marks as EXCLUIDO, clears missions, removes S3 file."""
+    """Soft-delete a report with optional cancellation email."""
     service = GestaoRelatoriosMedicaoService(db)
-    await service.excluir_relatorio(relatorio_id)
+    await service.excluir_relatorio(
+        relatorio_id=relatorio_id,
+        enviar_cancelamento=body.enviar_cancelamento if body else False,
+        forcar_exclusao=body.forcar_exclusao if body else False,
+        user_email=current_user.email,
+    )
     return ExcluirRelatorioResponse(mensagem="Relatório excluído com sucesso")
 
 
