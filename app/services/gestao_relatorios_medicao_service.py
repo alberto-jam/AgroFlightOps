@@ -48,7 +48,7 @@ class GestaoRelatoriosMedicaoService:
         cliente_id: int | None = None,
         data_inicial: date | None = None,
         data_final: date | None = None,
-        status: str = "ATIVO",
+        status: str | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> PaginatedResult:
@@ -60,8 +60,11 @@ class GestaoRelatoriosMedicaoService:
         )
 
         # Apply filters
-        if status:
+        if status is not None:
             stmt = stmt.where(RelatorioMedicao.status == status)
+        else:
+            # Default: return ATIVO and ENVIADO (exclude only EXCLUIDO)
+            stmt = stmt.where(RelatorioMedicao.status.in_(["ATIVO", "ENVIADO"]))
 
         if cliente_id is not None:
             stmt = stmt.where(RelatorioMedicao.cliente_id == cliente_id)
@@ -96,7 +99,7 @@ class GestaoRelatoriosMedicaoService:
         """Generate presigned URL for downloading a report (60min expiration).
 
         Returns the presigned URL string.
-        Raises EntityNotFoundError if report not found or deleted.
+        Raises EntityNotFoundError if report not found or not in a downloadable status.
         """
         relatorio = await self.db.get(RelatorioMedicao, relatorio_id)
 
@@ -105,7 +108,7 @@ class GestaoRelatoriosMedicaoService:
                 f"Relatório com id={relatorio_id} não encontrado"
             )
 
-        if relatorio.status == "EXCLUIDO":
+        if relatorio.status not in ("ATIVO", "ENVIADO"):
             raise EntityNotFoundError(
                 "Relatório não está mais disponível"
             )
@@ -128,13 +131,28 @@ class GestaoRelatoriosMedicaoService:
 
         return url
 
-    async def excluir_relatorio(self, relatorio_id: int) -> None:
-        """Soft delete a report: mark as EXCLUIDO, clear missions, try S3 delete.
+    async def excluir_relatorio(
+        self,
+        relatorio_id: int,
+        enviar_cancelamento: bool = False,
+        forcar_exclusao: bool = False,
+        user_email: str | None = None,
+    ) -> None:
+        """Soft delete a report with optional cancellation email.
+
+        If enviar_cancelamento=True and the report has recipients (enviado_para),
+        a cancellation email is sent before deletion. If SES fails and
+        forcar_exclusao=False, raises HTTPException(502) without modifying the report.
 
         Raises EntityNotFoundError if not found.
         Raises BusinessRuleViolationError if already deleted.
+        Raises HTTPException(502) if cancellation email fails and forcar_exclusao is False.
         """
-        relatorio = await self.db.get(RelatorioMedicao, relatorio_id)
+        relatorio = await self.db.get(
+            RelatorioMedicao,
+            relatorio_id,
+            options=[joinedload(RelatorioMedicao.cliente)],
+        )
 
         if relatorio is None:
             raise EntityNotFoundError(
@@ -145,6 +163,54 @@ class GestaoRelatoriosMedicaoService:
             raise BusinessRuleViolationError(
                 "Relatório já foi excluído anteriormente"
             )
+
+        if relatorio.status not in ("ATIVO", "ENVIADO"):
+            raise BusinessRuleViolationError(
+                "Relatório não está em um status válido para exclusão"
+            )
+
+        # Cancellation email orchestration
+        if enviar_cancelamento and relatorio.enviado_para:
+            cliente_nome = relatorio.cliente.nome
+            data_inicial_fmt = relatorio.data_inicial.strftime("%d/%m/%Y")
+            data_final_fmt = relatorio.data_final.strftime("%d/%m/%Y")
+            enviado_em_fmt = relatorio.enviado_em.strftime("%d/%m/%Y %H:%M")
+
+            subject = (
+                f"Cancelamento do relatório Relatório de Medição - "
+                f"{cliente_nome} - {data_inicial_fmt} a {data_final_fmt}"
+            )
+
+            body_text = (
+                "O relatório abaixo foi cancelado pelo remetente, favor desconsiderá-lo.\n\n"
+                f"Relatório: Relatório de Medição - {cliente_nome} - "
+                f"{data_inicial_fmt} a {data_final_fmt}\n"
+                f"Data do Envio: {enviado_em_fmt}\n\n"
+                "Em caso de dúvidas, entrar em contato.\n\n"
+                "Atenciosamente"
+            )
+
+            to_addresses = [e.strip() for e in relatorio.enviado_para.split(",")]
+            cc_addresses = [user_email] if user_email else None
+
+            try:
+                ses_service = SesEmailService()
+                ses_service.send_cancellation_email(
+                    to_addresses=to_addresses,
+                    subject=subject,
+                    body_text=body_text,
+                    cc_addresses=cc_addresses,
+                )
+            except Exception as e:
+                if not forcar_exclusao:
+                    raise HTTPException(
+                        status_code=502,
+                        detail="Falha no envio do e-mail de cancelamento. Deseja prosseguir com a exclusão?",
+                    ) from e
+                logger.warning(
+                    f"Falha no envio do e-mail de cancelamento para relatório id={relatorio_id}. "
+                    "Prosseguindo com exclusão forçada."
+                )
 
         # 1. Soft delete
         relatorio.status = "EXCLUIDO"
@@ -246,6 +312,7 @@ class GestaoRelatoriosMedicaoService:
             ) from e
 
         # Update report metadata
+        relatorio.status = "ENVIADO"
         relatorio.enviado_em = datetime.utcnow()
         relatorio.enviado_para = ",".join(e.strip() for e in emails)
         await self.db.commit()

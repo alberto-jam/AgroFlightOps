@@ -229,9 +229,9 @@ async def _create_relatorio_with_missoes(
 async def test_listar_relatorios_returns_active_by_default(
     async_client, db_session, admin_token
 ):
-    """GET /medicoes-rop/relatorios without status filter returns only ATIVO reports.
+    """GET /medicoes-rop/relatorios without status filter returns ATIVO and ENVIADO reports.
 
-    Validates Requirements: 2.1, 2.6
+    Validates Requirements: 3.2, 3.3
     """
     entities = await _seed_base_entities(db_session)
     await _create_relatorio_with_missoes(db_session, entities, status="ATIVO")
@@ -248,9 +248,9 @@ async def test_listar_relatorios_returns_active_by_default(
     assert response.status_code == 200
     data = response.json()
     assert data["total"] >= 1
-    # All returned items should be ATIVO
+    # All returned items should be ATIVO or ENVIADO (never EXCLUIDO)
     for item in data["items"]:
-        assert item["status"] == "ATIVO"
+        assert item["status"] in ("ATIVO", "ENVIADO")
 
 
 @pytest.mark.asyncio
@@ -662,6 +662,7 @@ async def test_enviar_relatorio_success(
 
     # Verify report metadata updated
     await db_session.refresh(relatorio)
+    assert relatorio.status == "ENVIADO"
     assert relatorio.enviado_em is not None
     assert "cliente@example.com" in relatorio.enviado_para
     assert "outro@example.com" in relatorio.enviado_para

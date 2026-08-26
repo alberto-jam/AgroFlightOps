@@ -6,6 +6,13 @@ from decimal import Decimal
 from pydantic import BaseModel, field_validator
 
 
+class ExcluirRelatorioRequest(BaseModel):
+    """Body para o endpoint DELETE com opções de cancelamento."""
+
+    enviar_cancelamento: bool = False
+    forcar_exclusao: bool = False
+
+
 class RelatorioMedicaoListItem(BaseModel):
     id: int
     cliente_nome: str
@@ -16,6 +23,7 @@ class RelatorioMedicaoListItem(BaseModel):
     gerado_em: datetime
     status: str
     enviado_em: datetime | None = None
+    enviado_para: str | None = None
 
     model_config = {"from_attributes": True}
 

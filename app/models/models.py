@@ -1029,7 +1029,7 @@ class RelatorioMedicao(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('ATIVO','EXCLUIDO')", name="ck_relatorios_medicao_status"
+            "status IN ('ATIVO','ENVIADO','EXCLUIDO')", name="ck_relatorios_medicao_status"
         ),
         CheckConstraint("total_area >= 0", name="ck_relatorios_medicao_total_area"),
         CheckConstraint("qtd_missoes > 0", name="ck_relatorios_medicao_qtd_missoes"),

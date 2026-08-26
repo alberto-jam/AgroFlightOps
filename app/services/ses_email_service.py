@@ -50,3 +50,33 @@ class SesEmailService:
                 },
             },
         )
+
+    def send_cancellation_email(
+        self,
+        to_addresses: list[str],
+        subject: str,
+        body_text: str,
+        cc_addresses: list[str] | None = None,
+    ) -> None:
+        """Send a cancellation notification email.
+
+        Args:
+            to_addresses: Original recipients.
+            subject: Email subject (format: "Cancelamento do relatório [nome]").
+            body_text: Plain text body with cancellation message.
+            cc_addresses: CC addresses (user who triggered cancellation).
+        """
+        destination: dict = {"ToAddresses": to_addresses}
+        if cc_addresses:
+            destination["CcAddresses"] = cc_addresses
+
+        self.client.send_email(
+            Source=self.sender,
+            Destination=destination,
+            Message={
+                "Subject": {"Data": subject, "Charset": "UTF-8"},
+                "Body": {
+                    "Text": {"Data": body_text, "Charset": "UTF-8"},
+                },
+            },
+        )

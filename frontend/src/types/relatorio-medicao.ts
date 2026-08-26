@@ -10,6 +10,7 @@ export interface RelatorioMedicaoListItem {
   gerado_em: string;
   status: string;
   enviado_em: string | null;
+  enviado_para: string | null;
 }
 
 export interface RelatorioDownloadResponse {
@@ -23,6 +24,11 @@ export interface EnviarRelatorioRequest {
 
 export interface EnviarRelatorioResponse {
   mensagem: string;
+}
+
+export interface ExcluirRelatorioParams {
+  enviar_cancelamento?: boolean;
+  forcar_exclusao?: boolean;
 }
 
 export interface ExcluirRelatorioResponse {
