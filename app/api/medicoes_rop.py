@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import require_perfil
+from app.models.models import Usuario
 from app.schemas.base import PaginatedResponse
 from app.schemas.gestao_relatorios_medicao import (
     EnviarRelatorioRequest,
@@ -80,6 +81,7 @@ async def preview_relatorio_medicao(
 async def gerar_relatorio_medicao(
     body: GerarRelatorioMedicaoRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
+    current_user: Annotated[Usuario, Depends(require_perfil("ADMINISTRADOR", "FINANCEIRO"))],
 ) -> RelatorioMedicaoGeradoResponse:
     """Gera PDF do relatório, salva no S3 e marca missões como enviadas."""
     service = RelatorioMedicaoRopService(db)
@@ -88,6 +90,7 @@ async def gerar_relatorio_medicao(
         cliente_id=body.cliente_id,
         data_inicial=body.data_inicial,
         data_final=body.data_final,
+        user_id=current_user.id,
     )
 
 

@@ -10,7 +10,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.exceptions import BusinessRuleViolationError, EntityNotFoundError
-from app.models.models import Cliente, Missao, OrdemServico, Propriedade, Talhao
+from app.models.models import (
+    Cliente,
+    Missao,
+    OrdemServico,
+    Propriedade,
+    RelatorioMedicao,
+    RelatorioMedicaoMissao,
+    Talhao,
+)
 from app.schemas.relatorio_medicao_rop import (
     MissaoPreviewItem,
     RelatorioMedicaoGeradoResponse,
@@ -99,6 +107,7 @@ class RelatorioMedicaoRopService:
         cliente_id: int,
         data_inicial: date,
         data_final: date,
+        user_id: int | None = None,
     ) -> RelatorioMedicaoGeradoResponse:
         """Gera PDF do relatório de medição, salva no S3 e marca missões como enviadas.
 
@@ -214,10 +223,37 @@ class RelatorioMedicaoRopService:
             .values(medicao_enviada_em=now)
         )
 
-        # 10. Commit the transaction
+        # 10. Persist report metadata in relatorios_medicao
+        relatorio_id = None
+        if user_id is not None:
+            relatorio = RelatorioMedicao(
+                cliente_id=cliente_id,
+                s3_key=s3_key,
+                data_inicial=data_inicial,
+                data_final=data_final,
+                total_area=total_area,
+                qtd_missoes=len(missao_ids),
+                gerado_em=now,
+                gerado_por=user_id,
+                status="ATIVO",
+            )
+            self.db.add(relatorio)
+            await self.db.flush()
+            relatorio_id = relatorio.id
+
+            # 11. Create junction records (relatorio_medicao_missoes)
+            for missao_id in missao_ids:
+                junction = RelatorioMedicaoMissao(
+                    relatorio_id=relatorio.id,
+                    missao_id=missao_id,
+                )
+                self.db.add(junction)
+
+        # 12. Commit the transaction
         await self.db.commit()
 
         return RelatorioMedicaoGeradoResponse(
             s3_key=s3_key,
             mensagem="Relatório gerado com sucesso",
+            relatorio_id=relatorio_id,
         )
